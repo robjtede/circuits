@@ -1,0 +1,15 @@
+{
+	"folders":
+	[
+		{
+			"follow_symlinks": true,
+			"path": "/Users/rob/Sites/flow",
+			"name": "Development"
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/rob/Sites/Archive/bokeh/labs/flow",
+			"name": "Reference"
+		}
+	]
+}
