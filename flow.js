@@ -1,36 +1,35 @@
 document.addEventListener("DOMContentLoaded", function (event) {
 
-var canvas = document.createElement("canvas");
-document.body.appendChild(canvas);
+// insert canvas
+document.body.appendChild(document.createElement("canvas"));
+var ctx = document.querySelector("canvas").getContext("2d");
 
-var w = canvas.width = window.innerWidth;
-var h = canvas.height = window.innerHeight;
-
-var ctx = canvas.getContext("2d");
+// initialize vars
+var w, h, size, cellSize, down=false;
 
 var colors = ["red", "green", "blue", "yellow", "orange"];
 var board = {
 	size: 5,
 	nodes: [
 		[
-			[0, 0],
-			[1, 4]
+			{x: 0, y:0},
+			{x: 1, y:4}
 			
 		], [
-			[2, 0],
-			[1, 3]
+			{x: 2, y:0},
+			{x: 1, y:3}
 			
 		], [
-			[2, 1],
-			[2, 4]
+			{x: 2, y:1},
+			{x: 2, y:4}
 			
 		], [
-			[4, 0],
-			[3, 3]
+			{x: 4, y:0},
+			{x: 3, y:3}
 			
 		], [
-			[4, 1],
-			[3, 4]
+			{x: 4, y:1},
+			{x: 3, y:4}
 			
 		]
 		
@@ -39,14 +38,25 @@ var board = {
 
 var lastFlows = {}; // last state of flows - background drawing
 var currentFlows = {}; // dynamic current state of slows - foreground drawing
-var proposedFlow = {}; // flow being drawn
+var proposedFlow = []; // flow being drawn
 
-var size = h < w ? h : w;
-size *= 0.9;
+function clear() {
+	
+	ctx.clearRect(0, 0, w, h);
+	
+}// clear()
 
-var cellSize = size / board.size;
 
-function grid (cells) {
+Array.prototype.last = function () {
+	
+	var len = this.length;
+	var last = this[len - 1];
+	
+	return last;
+	
+}// Array.last()
+
+function drawGrid(cells) {
 	
 	for (var i=0; i<=board.size; i++) {
 		
@@ -72,17 +82,17 @@ function grid (cells) {
 	
 }// grid()
 
-function drawNodes () {
+function drawNodes() {
 	
 	board.nodes.forEach(function (val, index) {
-		drawNode(val[0][0], val[0][1], colors[index]);
-		drawNode(val[1][0], val[1][1], colors[index]);
+		drawNode(val[0].x, val[0].y, colors[index]);
+		drawNode(val[1].x, val[1].y, colors[index]);
 		
 	});// nodes forEach
 	
 }// drawNodes()
 
-function drawNode (x, y, color) {
+function drawNode(x, y, color) {
 	color = typeof color === "undefined" ? "white" : color; 
 	
 	var pos = centerPos(x, y);
@@ -97,24 +107,184 @@ function drawNode (x, y, color) {
 	
 	ctx.restore();
 	
-}// drawNode
+}// drawNode()
 
-function centerPos (x, y) {
+function centerPos(cx, cy) {
 	
-	var x = w/2 - size/2 + x*cellSize + cellSize/2;
-	var y = h/2 - size/2 + y*cellSize + cellSize/2;
+	var cx = w/2 - size/2 + cx*cellSize + cellSize/2;
+	var cy = h/2 - size/2 + cy*cellSize + cellSize/2;
+	
+	return {x: cx, y: cy}
+	
+}// centerPos()
+
+function topLeftPos(cx, cy) {
+	
+	var x = w/2 - size/2 + cx*cellSize;
+	var y = h/2 - size/2 + cy*cellSize;
 	
 	return {x: x, y: y}
 	
-}// centerPos
+}// centerPos()
 
-function init () {
+function posToCell(cx, cy) {
 	
-	grid();
+	var x = cx;
+	var y = cy;
+	
+	x -= (w/2 - size/2);
+	x /= cellSize;
+	x = Math.floor(x);
+	
+	y -= (h/2 - size/2);
+	y /= cellSize;
+	y = Math.floor(y);
+	
+	if (x < 0) throw new Error("x result is less than 0");
+	if (x > board.size-1) throw new Error("x result is greater than board");
+	if (y < 0) throw new Error("y result is less than 0");
+	if (y > board.size-1) throw new Error("y result is greater than board");
+	
+	
+	return {x: x, y: y}
+	
+}// posToCell()
+
+function compareCoords(c1, c2) {
+	
+	if (c1.x !== c2.x) return false;
+	if (c1.y !== c2.y) return false;
+	return true;
+	
+}// compareCoords()
+
+function updateBoard() {
+	
+	clear();
+	drawGrid();
+	drawNodes();
+	drawFlows();
+	
+}
+
+function init() {
+	
+	w = ctx.canvas.width = window.innerWidth;
+	h = ctx.canvas.height = window.innerHeight;
+	
+	size = Math.min(w, h) * 0.9;
+
+	cellSize = size / board.size;
+	
+	clear();
+	drawGrid();
 	drawNodes();
 	
 }// init()
 
 init();
+
+function drawFlows() {
+	
+	if (proposedFlow.length === 0) return false;
+	var pf = proposedFlow;
+	
+	ctx.save();
+	ctx.strokeStyle = "orange";
+	ctx.lineWidth = 35;
+	ctx.lineJoin = "round";
+	ctx.lineCap = "round";
+	
+	try {
+		var pos = centerPos(pf[0].x, pf[0].y);
+	} catch (e) {return false}
+	
+	ctx.beginPath();
+	ctx.moveTo(pos.x, pos.y);
+	
+	proposedFlow.slice(1).forEach(function (val, index) {
+		try {
+			var center = centerPos(val.x, val.y);
+			var topleft = topLeftPos(val.x, val.y);
+		} catch (e) {console.log("here");}
+		
+		ctx.save();
+		ctx.fillStyle = "orange";
+		ctx.globalAlpha = 0.2;
+		ctx.fillRect(topleft.x, topleft.y, cellSize, cellSize);
+		ctx.restore();
+		
+		ctx.lineTo(center.x, center.y);
+		
+	});
+	
+	ctx.stroke();
+	
+	ctx.restore();
+	
+}// drawFlows()
+
+function isAdjacent(c1, c2) {
+	
+	if (
+		(c2.x == c1.x + 1 && c2.y == c1.y) ||
+		(c2.x == c1.x - 1 && c2.y == c1.y) ||
+		(c2.x == c1.x && c2.y == c1.y + 1) ||
+		(c2.x == c1.x && c2.y == c1.y - 1)
+	) return true;
+	
+	return false;
+	
+}// isAdjacent()
+
+window.addEventListener("mousedown", function (event) {
+	event.preventDefault();
+	
+	down = true;
+	
+	try {
+		var coords = posToCell(event.pageX, event.pageY);
+		
+		proposedFlow.push(coords);
+		console.log(proposedFlow);
+		updateBoard();
+		
+	} catch (e) {}
+	
+});
+
+window.addEventListener("mouseup", function (event) {
+	event.preventDefault();
+	
+	down = false;
+	
+	proposedFlow = [];
+	updateBoard();
+	
+});
+
+window.addEventListener("mousemove", function (event) {
+	event.preventDefault();
+	if (!down) return false;
+	
+	try {
+		var coords = posToCell(event.pageX, event.pageY);
+		
+		var pf = proposedFlow;
+		
+		if (!compareCoords(pf.last(), coords) && isAdjacent(pf.last(), coords)) {
+			
+			console.log(coords);
+			pf.push(coords);
+			
+			
+		}
+		
+		updateBoard();
+		
+	} catch (e) {}
+	
+});// mousedown
+
 
 });// DOMContentLoaded
