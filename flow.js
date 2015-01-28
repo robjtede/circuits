@@ -5,7 +5,7 @@ document.body.appendChild(document.createElement("canvas"));
 var ctx = document.querySelector("canvas").getContext("2d");
 
 // initialize vars
-var w, h, size, cellSize, down=false;
+var w, h, size, cellSize, down, proposedFlowColor, proposedFlowEnd;
 
 var colors = ["red", "green", "blue", "yellow", "orange"];
 var board = {
@@ -158,6 +158,49 @@ function compareCoords(c1, c2) {
 	
 }// compareCoords()
 
+function isAdjacent(c1, c2) {
+	
+	if (
+		(c2.x == c1.x + 1 && c2.y == c1.y) ||
+		(c2.x == c1.x - 1 && c2.y == c1.y) ||
+		(c2.x == c1.x && c2.y == c1.y + 1) ||
+		(c2.x == c1.x && c2.y == c1.y - 1)
+	) return true;
+	
+	return false;
+	
+}// isAdjacent()
+
+function isNode(x, y) {
+	
+	var found = false;
+	
+	board.nodes.forEach(function (val, index) {
+		
+		if (val[0].x == x && val[0].y == y) found = true;
+		if (val[1].x == x && val[1].y == y) found = true;
+		
+	});
+	
+	return found;
+	
+}// isNode()
+
+function nodeColor(x, y) {
+	
+	var found = false;
+	
+	board.nodes.forEach(function (val, index) {
+		
+		if (val[0].x == x && val[0].y == y) found = colors[index];
+		if (val[1].x == x && val[1].y == y) found = colors[index];
+		
+	});
+	
+	return found;
+	
+}// nodeColor()
+
 function updateBoard() {
 	
 	clear();
@@ -176,6 +219,9 @@ function init() {
 
 	cellSize = size / board.size;
 	
+	proposedFlowColor = false;
+	proposedFlowEnd = false;
+	
 	clear();
 	drawGrid();
 	drawNodes();
@@ -190,52 +236,53 @@ function drawFlows() {
 	var pf = proposedFlow;
 	
 	ctx.save();
-	ctx.strokeStyle = "orange";
+	ctx.strokeStyle = proposedFlowColor;
 	ctx.lineWidth = 35;
 	ctx.lineJoin = "round";
 	ctx.lineCap = "round";
 	
 	try {
 		var pos = centerPos(pf[0].x, pf[0].y);
-	} catch (e) {return false}
-	
-	ctx.beginPath();
-	ctx.moveTo(pos.x, pos.y);
-	
-	proposedFlow.slice(1).forEach(function (val, index) {
-		try {
+		
+		ctx.beginPath();
+		ctx.moveTo(pos.x, pos.y);
+		
+		
+		proposedFlow.forEach(function (val, index) {
+			
 			var center = centerPos(val.x, val.y);
 			var topleft = topLeftPos(val.x, val.y);
-		} catch (e) {console.log("here");}
+			
+			ctx.save();
+			ctx.fillStyle = proposedFlowColor;
+			ctx.globalAlpha = 0.2;
+			ctx.fillRect(topleft.x, topleft.y, cellSize, cellSize);
+			ctx.restore();
+			
+			ctx.lineTo(center.x, center.y);
+			
+			
+		});
 		
-		ctx.save();
-		ctx.fillStyle = "orange";
-		ctx.globalAlpha = 0.2;
-		ctx.fillRect(topleft.x, topleft.y, cellSize, cellSize);
+		ctx.stroke();
+		
 		ctx.restore();
 		
-		ctx.lineTo(center.x, center.y);
-		
-	});
-	
-	ctx.stroke();
-	
-	ctx.restore();
+	} catch (e) { return false; }
 	
 }// drawFlows()
 
-function isAdjacent(c1, c2) {
+function isMatchingNode(x, y) {
+	if (!isNode(x, y)) return false; // error - not a node
 	
-	if (
-		(c2.x == c1.x + 1 && c2.y == c1.y) ||
-		(c2.x == c1.x - 1 && c2.y == c1.y) ||
-		(c2.x == c1.x && c2.y == c1.y + 1) ||
-		(c2.x == c1.x && c2.y == c1.y - 1)
-	) return true;
+	var firstNode = compareCoords({x: x, y: y}, proposedFlow[0]);
+	
+	if (firstNode) return false;
+	if (nodeColor(x, y) == proposedFlowColor) return true;
 	
 	return false;
 	
-}// isAdjacent()
+}// isMatchingNode()
 
 window.addEventListener("mousedown", function (event) {
 	event.preventDefault();
@@ -244,9 +291,12 @@ window.addEventListener("mousedown", function (event) {
 	
 	try {
 		var coords = posToCell(event.pageX, event.pageY);
+		var node = nodeColor(coords.x, coords.y);
+		
+		if (node == false) return;
+		proposedFlowColor = node;
 		
 		proposedFlow.push(coords);
-		console.log(proposedFlow);
 		updateBoard();
 		
 	} catch (e) {}
@@ -257,6 +307,9 @@ window.addEventListener("mouseup", function (event) {
 	event.preventDefault();
 	
 	down = false;
+	
+	proposedFlowColor = undefined;
+	proposedFlowEnd = undefined;
 	
 	proposedFlow = [];
 	updateBoard();
@@ -272,11 +325,16 @@ window.addEventListener("mousemove", function (event) {
 		
 		var pf = proposedFlow;
 		
-		if (!compareCoords(pf.last(), coords) && isAdjacent(pf.last(), coords)) {
+		var same = compareCoords(pf.last(), coords);
+		var adjacent = isAdjacent(pf.last(), coords);
+		var node = isNode(coords.x, coords.y);
+		var matchingNode = isMatchingNode(coords.x, coords.y);
+		
+		if (!same && adjacent && (!node || matchingNode) && !proposedFlowEnd) {
 			
-			console.log(coords);
 			pf.push(coords);
 			
+			proposedFlowEnd = matchingNode ? true : false;
 			
 		}
 		
