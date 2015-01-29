@@ -36,8 +36,8 @@ var board = {
 	]
 }; // game settings object
 
-var lastFlows = {}; // last state of flows - background drawing
-var currentFlows = {}; // dynamic current state of slows - foreground drawing
+var lastFlows = []; // last state of flows - background drawing
+var currentFlows = []; // dynamic current state of slows - foreground drawing
 var proposedFlow = []; // flow being drawn
 
 function clear() {
@@ -207,6 +207,7 @@ function updateBoard() {
 	drawGrid();
 	drawNodes();
 	drawFlows();
+	drawProposedFlow();
 	
 }
 
@@ -230,19 +231,19 @@ function init() {
 
 init();
 
-function drawFlows() {
-	
-	if (proposedFlow.length === 0) return false;
-	var pf = proposedFlow;
-	
-	ctx.save();
-	ctx.strokeStyle = proposedFlowColor;
-	ctx.lineWidth = 35;
-	ctx.lineJoin = "round";
-	ctx.lineCap = "round";
+function drawProposedFlow() {
 	
 	try {
-		var pos = centerPos(pf[0].x, pf[0].y);
+		
+		if (proposedFlow.length === 0) throw new Error("proposed flow empty");
+		
+		ctx.save();
+		ctx.strokeStyle = proposedFlowColor;
+		ctx.lineWidth = 35;
+		ctx.lineJoin = "round";
+		ctx.lineCap = "round";
+		
+		var pos = centerPos(proposedFlow[0].x, proposedFlow[0].y);
 		
 		ctx.beginPath();
 		ctx.moveTo(pos.x, pos.y);
@@ -265,10 +266,52 @@ function drawFlows() {
 		});
 		
 		ctx.stroke();
+		ctx.restore();
+		
+	} catch (e) { console.warn("got here somehow (drawProposedFlow)"); }
+	
+}// drawProposedFlow()
+
+
+function drawFlows() {
+	
+	try {
+		if (currentFlows.length === 0) throw new Error("flows empty");
+		
+		ctx.save();
+		ctx.lineWidth = 35;
+		ctx.lineJoin = "round";
+		ctx.lineCap = "round";
+		
+		currentFlows.forEach(function (flow, flowIndex) {
+			var move = centerPos(flow.points[0].x, flow.points[0].y);
+			
+			ctx.strokeStyle = flow.color;
+			ctx.fillStyle = flow.color;
+			
+			ctx.beginPath();
+			ctx.moveTo(move.x, move.y);
+			
+			flow.points.forEach(function (point, pointIndex) {
+				var center = centerPos(point.x, point.y);
+				var topleft = topLeftPos(point.x, point.y);
+				
+				ctx.save();
+				ctx.globalAlpha = 0.2;
+				ctx.fillRect(topleft.x, topleft.y, cellSize, cellSize);
+				ctx.restore();
+				
+				ctx.lineTo(center.x, center.y);
+				
+			});
+			
+			ctx.stroke();
+			
+		});
 		
 		ctx.restore();
 		
-	} catch (e) { return false; }
+	} catch (e) { console.warn("got here somehow (drawFlows)"); }
 	
 }// drawFlows()
 
@@ -284,7 +327,42 @@ function isMatchingNode(x, y) {
 	
 }// isMatchingNode()
 
+function isInProposedFlow(x, y) {
+	
+	// if (proposedFlow.length == 2) return false;
+	var found = false;
+	
+	proposedFlow.forEach(function (val, index) {
+		
+		var compare = compareCoords(val, {x: x, y: y});
+		
+		if (compare) found = true;
+		
+	});
+	
+	return found;
+	
+}// isInProposedFlow()
+
+function posInProposedFlow(x, y) {
+	
+	// if (proposedFlow.length == 2) return false;
+	var found = false;
+	
+	proposedFlow.forEach(function (val, index) {
+		
+		var compare = compareCoords(val, {x: x, y: y});
+		
+		if (compare) found = index;
+		
+	});
+	
+	return found;
+	
+}// isInProposedFlow()
+
 window.addEventListener("mousedown", function (event) {
+	if (event.button !== 0) return;
 	event.preventDefault();
 	
 	down = true;
@@ -301,20 +379,32 @@ window.addEventListener("mousedown", function (event) {
 		
 	} catch (e) {}
 	
-});
+});// mousedown
 
 window.addEventListener("mouseup", function (event) {
 	event.preventDefault();
 	
 	down = false;
 	
+	if (proposedFlow.length !== 0) {
+		currentFlows.push({
+			color: proposedFlowColor,
+			points: proposedFlow
+			
+		});
+		
+	}
+	
 	proposedFlowColor = undefined;
 	proposedFlowEnd = undefined;
 	
 	proposedFlow = [];
-	updateBoard();
+	try {
+		updateBoard();
+		
+	} catch (e) {}
 	
-});
+});// mouseup
 
 window.addEventListener("mousemove", function (event) {
 	event.preventDefault();
@@ -323,26 +413,34 @@ window.addEventListener("mousemove", function (event) {
 	try {
 		var coords = posToCell(event.pageX, event.pageY);
 		
-		var pf = proposedFlow;
-		
-		var same = compareCoords(pf.last(), coords);
-		var adjacent = isAdjacent(pf.last(), coords);
-		var node = isNode(coords.x, coords.y);
+		var same = compareCoords(proposedFlow.last(), coords);
+		var adjacent = isAdjacent(proposedFlow.last(), coords);
+		var node = nodeColor(coords.x, coords.y);
 		var matchingNode = isMatchingNode(coords.x, coords.y);
+		var inProposedFlow = posInProposedFlow(coords.x, coords.y);
 		
-		if (!same && adjacent && (!node || matchingNode) && !proposedFlowEnd) {
-			
-			pf.push(coords);
+		if (
+			!same &&
+			adjacent &&
+			(!node || matchingNode || node == proposedFlowColor) &&
+			(!proposedFlowEnd || !!inProposedFlow)
+		) {
+			if (inProposedFlow === false) {
+				proposedFlow.push(coords);
+				
+			} else {
+				proposedFlow = proposedFlow.slice(0, inProposedFlow + 1);
+				
+			}
 			
 			proposedFlowEnd = matchingNode ? true : false;
-			
+			updateBoard();
 		}
 		
-		updateBoard();
 		
 	} catch (e) {}
 	
-});// mousedown
+});// mousemove
 
 
 });// DOMContentLoaded
