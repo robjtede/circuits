@@ -5,7 +5,7 @@ document.body.appendChild(document.createElement("canvas"));
 var ctx = document.querySelector("canvas").getContext("2d");
 
 // initialize vars
-var w, h, size, cellSize, down, proposedFlowColor, proposedFlowEnd;
+var w, h, size, cellSize, down, touchId, proposedFlowColor, proposedFlowEnd;
 
 var colors = ["red", "green", "blue", "yellow", "orange"];
 var board = {
@@ -361,52 +361,7 @@ function posInProposedFlow(x, y) {
 	
 }// isInProposedFlow()
 
-window.addEventListener("mousedown", function (event) {
-	if (event.button !== 0) return;
-	event.preventDefault();
-	
-	down = true;
-	
-	try {
-		var coords = posToCell(event.pageX, event.pageY);
-		var node = nodeColor(coords.x, coords.y);
-		
-		if (node == false) return;
-		proposedFlowColor = node;
-		
-		proposedFlow.push(coords);
-		updateBoard();
-		
-	} catch (e) {}
-	
-});// mousedown
-
-window.addEventListener("mouseup", function (event) {
-	event.preventDefault();
-	
-	down = false;
-	
-	if (proposedFlow.length !== 0) {
-		currentFlows.push({
-			color: proposedFlowColor,
-			points: proposedFlow
-			
-		});
-		
-	}
-	
-	proposedFlowColor = undefined;
-	proposedFlowEnd = undefined;
-	
-	proposedFlow = [];
-	try {
-		updateBoard();
-		
-	} catch (e) {}
-	
-});// mouseup
-
-window.addEventListener("mousemove", function (event) {
+function moveEvent(event) {
 	event.preventDefault();
 	if (!down) return false;
 	
@@ -440,7 +395,155 @@ window.addEventListener("mousemove", function (event) {
 		
 	} catch (e) {}
 	
-});// mousemove
+}// moveEvent()
 
+function downEvent(event) {
+	if (event.button !== 0) return;
+	event.preventDefault();
+	
+	down = true;
+	
+	try {
+		var coords = posToCell(event.pageX, event.pageY);
+		var node = nodeColor(coords.x, coords.y);
+		
+		if (node == false) return;
+		proposedFlowColor = node;
+		
+		proposedFlow.push(coords);
+		updateBoard();
+		
+	} catch (e) {}
+	
+}// downEvent()
+
+function upEvent(event) {
+	event.preventDefault();
+	
+	down = false;
+	
+	if (proposedFlow.length !== 0) {
+		currentFlows.push({
+			color: proposedFlowColor,
+			points: proposedFlow
+			
+		});
+		
+	}
+	
+	proposedFlowColor = undefined;
+	proposedFlowEnd = undefined;
+	
+	proposedFlow = [];
+	try {
+		updateBoard();
+		
+	} catch (e) {}
+	
+}// upEvent()
+
+function moveTouchEvent(event) {
+	event.preventDefault();
+	if (!down) return false;
+	
+	try {
+		for (var i=0; i<event.touches.length; i++) {
+			if (event.touches[i].identifier == touchId) {
+				var coords = posToCell(event.touches[i].pageX, event.touches[i].pageY);
+				
+			}
+			
+		}
+		
+		var same = compareCoords(proposedFlow.last(), coords);
+		var adjacent = isAdjacent(proposedFlow.last(), coords);
+		var node = nodeColor(coords.x, coords.y);
+		var matchingNode = isMatchingNode(coords.x, coords.y);
+		var inProposedFlow = posInProposedFlow(coords.x, coords.y);
+		
+		if (
+			!same &&
+			adjacent &&
+			(!node || matchingNode || node == proposedFlowColor) &&
+			(!proposedFlowEnd || !!inProposedFlow)
+		) {
+			if (inProposedFlow === false) {
+				proposedFlow.push(coords);
+				
+			} else {
+				proposedFlow = proposedFlow.slice(0, inProposedFlow + 1);
+				
+			}
+			
+			proposedFlowEnd = matchingNode ? true : false;
+			updateBoard();
+		}
+		
+		
+	} catch (e) {}
+	
+}// moveTouchEvent()
+
+function downTouchEvent(event) {
+	event.preventDefault();
+	
+	touchId = event.touches[0].identifier;
+	down = true;
+	
+	try {
+		for (var i=0; i<event.touches.length; i++) {
+			if (event.touches[i].identifier == touchId) {
+				var coords = posToCell(event.touches[i].pageX, event.touches[i].pageY);
+				
+			}
+			
+		}
+			
+		var node = nodeColor(coords.x, coords.y);
+		
+		if (node == false) return;
+		proposedFlowColor = node;
+		
+		proposedFlow.push(coords);
+		updateBoard();
+		
+	} catch (e) {}
+	
+}// downTouchEvent()
+
+function upTouchEvent(event) {
+	event.preventDefault();
+	
+	down = false;
+	touchId = undefined;
+	
+	if (proposedFlow.length !== 0) {
+		currentFlows.push({
+			color: proposedFlowColor,
+			points: proposedFlow
+			
+		});
+		
+	}
+	
+	proposedFlowColor = undefined;
+	proposedFlowEnd = undefined;
+	
+	proposedFlow = [];
+	try {
+		updateBoard();
+		
+	} catch (e) {}
+	
+}// upTouchEvent()
+
+window.addEventListener("mousedown", downEvent);
+window.addEventListener("mousemove", moveEvent);
+window.addEventListener("mouseup", upEvent);
+
+window.addEventListener("touchstart", downTouchEvent);
+window.addEventListener("touchmove", moveTouchEvent);
+window.addEventListener("touchend", upTouchEvent);
+window.addEventListener("touchcancel", upTouchEvent);
 
 });// DOMContentLoaded
