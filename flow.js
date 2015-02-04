@@ -329,7 +329,6 @@ function isMatchingNode(x, y) {
 
 function isInProposedFlow(x, y) {
 	
-	// if (proposedFlow.length == 2) return false;
 	var found = false;
 	
 	proposedFlow.forEach(function (val, index) {
@@ -342,7 +341,39 @@ function isInProposedFlow(x, y) {
 	
 	return found;
 	
-}// isInProposedFlow()
+}// posInProposedFlow()
+
+function posInFlows(x, y) {
+	
+	var found = false;
+	
+	currentFlows.forEach(function (flow, flowIndex) {
+		
+		flow.points.forEach(function (point, posIndex) {
+			var compare = compareCoords(point, {x: x, y: y});
+			if (compare) found = {flow: flowIndex, pos: posIndex};
+			
+		});
+		
+	});
+	
+	return found;
+	
+}// posInFlows()
+
+function colorInFlows(color) {
+	var found = false;
+	
+	currentFlows.forEach(function (flow, flowIndex) {
+		
+		var compare = (color === flow.color);
+		if (compare) found = flowIndex;
+		
+	});
+	
+	return found;
+	
+}// colorInFlows()
 
 function posInProposedFlow(x, y) {
 	
@@ -406,11 +437,27 @@ function downEvent(event) {
 	try {
 		var coords = posToCell(event.pageX, event.pageY);
 		var node = nodeColor(coords.x, coords.y);
+		var flowExists = posInFlows(coords.x, coords.y);
 		
-		if (node == false) return;
-		proposedFlowColor = node;
+		if (flowExists !== false) {
+			var flow = currentFlows.splice(flowExists.flow, 1)[0];
+			proposedFlow = flow.points.slice(0, flowExists.pos + 1);
+			proposedFlowColor = flow.color;
+			
+		} else {
+			if (node == false) return;
+			var colorExists = colorInFlows(node);
+			proposedFlowColor = node;
+			
+			if (colorExists !== false) {
+				currentFlows.splice(colorExists, 1);
+				
+			}
+			
+			proposedFlow.push(coords);
+			
+		}
 		
-		proposedFlow.push(coords);
 		updateBoard();
 		
 	} catch (e) {}
