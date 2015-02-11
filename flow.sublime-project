@@ -3,13 +3,7 @@
 	[
 		{
 			"follow_symlinks": true,
-			"name": "Development",
-			"path": "/Users/rob/Sites/flow"
-		},
-		{
-			"follow_symlinks": true,
-			"name": "Reference",
-			"path": "/Users/rob/Sites/Archive/bokeh/labs/flow"
+			"path": "/Users/rob/Sites/tests/webgl"
 		}
 	]
 }
