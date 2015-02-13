@@ -46,6 +46,8 @@ function clear() {
 	
 }// clear()
 
+
+
 Array.prototype.last = function () {
 	
 	var len = this.length;
@@ -398,22 +400,21 @@ function anyProposedInCurrentFlows() {
 function backupFlows() {
 	
 	prevFlows = [];
+	var newFlows = [];
 	
 	currentFlows.forEach(function (flow, flowIndex) {
 		
-		prevFlows[flowIndex] = {};
-		prevFlows[flowIndex].color = flow.color;
-		prevFlows[flowIndex].points = [];
-		
-		
+		newFlows.push({ color: flow.color, points: [] });
 		flow.points.forEach(function (point, pointIndex) {
 			
-			prevFlows[flowIndex].points[pointIndex] = point;
+			newFlows.last().points[pointIndex] = point;
 			
 		});
 		
 		
 	});
+	
+	prevFlows = newFlows;
 	
 	proposedFlowColor = undefined;
 	proposedFlowEnd = undefined;
@@ -422,14 +423,13 @@ function backupFlows() {
 }// backupFlows()
 
 function restoreFlows() {
-	
 	currentFlows = [];
 	var newFlows = [];
 	
 	for (var i=0, j=prevFlows.length; i<j; i++) {
 		if (prevFlows[i].color === proposedFlowColor) {
 			prevFlows.splice(i, 1);
-			
+			j--;
 		}
 		
 	}
@@ -531,10 +531,10 @@ function downEvent(event) {
 			
 		}
 		
+	} catch (e) { console.warn("down event error"); }
 		restoreFlows();
 		updateBoard();
 		
-	} catch (e) {}
 	
 }// downEvent()
 
@@ -542,19 +542,19 @@ function upEvent(event) {
 	event.preventDefault();
 	
 	down = false;
-	
-	if (proposedFlow.length !== 0) {
-		currentFlows.push({
-			color: proposedFlowColor,
-			points: proposedFlow
-			
-		});
-		
-	}
-	
-	backupFlows();
-	
 	try {
+		
+		if (proposedFlow.length !== 0) {
+			currentFlows.push({
+				color: proposedFlowColor,
+				points: proposedFlow
+				
+			});
+			
+		}
+		
+		
+		backupFlows();
 		updateBoard();
 		
 	} catch (e) { console.warn("updateBoard errored"); }
@@ -581,20 +581,37 @@ function moveTouchEvent(event) {
 		var inProposedFlow = posInProposedFlow(coords.x, coords.y);
 		
 		if (
-			!same &&
-			adjacent &&
+			!same && adjacent &&
 			(!node || matchingNode || node == proposedFlowColor) &&
 			(!proposedFlowEnd || !!inProposedFlow)
 		) {
+			
 			if (inProposedFlow === false) {
 				proposedFlow.push(coords);
 				
 			} else {
+				// handle backtracking
 				proposedFlow = proposedFlow.slice(0, inProposedFlow + 1);
 				
 			}
 			
+			restoreFlows();
+			
+			// limit extra flow from end node
 			proposedFlowEnd = matchingNode ? true : false;
+			
+			// find conflicting flows and slice
+			var posInfo = anyProposedInCurrentFlows();
+			if ( posInfo !== false ) {
+				
+				posInfo.forEach(function (val, index) {
+					currentFlows[val.flow].points =
+					currentFlows[val.flow].points.slice(0, val.pos);
+					
+				});
+				
+			}
+			
 			updateBoard();
 		}
 		
@@ -617,10 +634,9 @@ function downTouchEvent(event) {
 			}
 			
 		}
-			
+		
 		var node = nodeColor(coords.x, coords.y);
 		var flowExists = posInFlows(coords.x, coords.y);
-		
 		if (flowExists !== false) {
 			var flow = currentFlows.splice(flowExists.flow, 1)[0];
 			proposedFlow = flow.points.slice(0, flowExists.pos + 1);
@@ -640,6 +656,7 @@ function downTouchEvent(event) {
 			
 		}
 		
+		restoreFlows();
 		updateBoard();
 		
 	} catch (e) {}
@@ -661,14 +678,12 @@ function upTouchEvent(event) {
 		
 	}
 	
-	proposedFlowColor = undefined;
-	proposedFlowEnd = undefined;
+	backupFlows();
 	
-	proposedFlow = [];
 	try {
 		updateBoard();
 		
-	} catch (e) {}
+	} catch (e) { console.warn("updateBoard errored"); }
 	
 }// upTouchEvent()
 
