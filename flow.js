@@ -513,9 +513,17 @@ function downEvent(event) {
 		var node = nodeColor(coords.x, coords.y);
 		var flowExists = posInFlows(coords.x, coords.y);
 		if (flowExists !== false) {
-			var flow = currentFlows.splice(flowExists.flow, 1)[0];
-			proposedFlow = flow.points.slice(0, flowExists.pos + 1);
-			proposedFlowColor = flow.color;
+			if (node == false) {
+				
+				var flow = currentFlows.splice(flowExists.flow, 1)[0];
+				proposedFlow = flow.points.slice(0, flowExists.pos + 1);
+				proposedFlowColor = flow.color;
+				
+			} else {
+				proposedFlowColor = node;
+				proposedFlow.push(coords);
+				
+			}
 			
 		} else {
 			if (node == false) return;
@@ -532,9 +540,10 @@ function downEvent(event) {
 		}
 		
 	} catch (e) { console.warn("down event error"); }
-		restoreFlows();
-		updateBoard();
-		
+	
+	restoreFlows();
+	updateBoard();
+	
 	
 }// downEvent()
 
@@ -638,9 +647,17 @@ function downTouchEvent(event) {
 		var node = nodeColor(coords.x, coords.y);
 		var flowExists = posInFlows(coords.x, coords.y);
 		if (flowExists !== false) {
-			var flow = currentFlows.splice(flowExists.flow, 1)[0];
-			proposedFlow = flow.points.slice(0, flowExists.pos + 1);
-			proposedFlowColor = flow.color;
+			if (node == false) {
+				
+				var flow = currentFlows.splice(flowExists.flow, 1)[0];
+				proposedFlow = flow.points.slice(0, flowExists.pos + 1);
+				proposedFlowColor = flow.color;
+				
+			} else {
+				proposedFlowColor = node;
+				proposedFlow.push(coords);
+				
+			}
 			
 		} else {
 			if (node == false) return;
@@ -655,9 +672,6 @@ function downTouchEvent(event) {
 			proposedFlow.push(coords);
 			
 		}
-		
-		restoreFlows();
-		updateBoard();
 		
 	} catch (e) {}
 	
