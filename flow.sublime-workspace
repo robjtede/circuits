@@ -4,6 +4,162 @@
 		"selected_items":
 		[
 			[
+				"cell",
+				"cellSize"
+			],
+			[
+				"prop",
+				"proportionFilled"
+			],
+			[
+				"pro",
+				"proportionFilled"
+			],
+			[
+				"prev",
+				"prevFlows"
+			],
+			[
+				"console",
+				"console.log	js-console-log"
+			],
+			[
+				"for",
+				"foreach	js-foreach"
+			],
+			[
+				"restore",
+				"restoreFlows"
+			],
+			[
+				"back",
+				"backupFlows"
+			],
+			[
+				"propsed",
+				"proposedFlowColor"
+			],
+			[
+				"proop",
+				"proposedFlowColor"
+			],
+			[
+				"com",
+				"compare"
+			],
+			[
+				"comp",
+				"compareCoords"
+			],
+			[
+				"poitn",
+				"pointIndex"
+			],
+			[
+				"flow",
+				"flowIndex"
+			],
+			[
+				"forEach",
+				"foreach	js-foreach"
+			],
+			[
+				"posIn",
+				"posInfo"
+			],
+			[
+				"current",
+				"currentFlows"
+			],
+			[
+				"color",
+				"colorExists"
+			],
+			[
+				"flw",
+				"flowIndex"
+			],
+			[
+				"curren",
+				"currentFlows"
+			],
+			[
+				"down",
+				"downEvent"
+			],
+			[
+				"draw",
+				"drawProposedFlow"
+			],
+			[
+				"curre",
+				"currentFlows"
+			],
+			[
+				"in",
+				"inProposedFlow"
+			],
+			[
+				"fo",
+				"foreach	js-foreach"
+			],
+			[
+				"node",
+				"nodeColor"
+			],
+			[
+				"forEac",
+				"foreach	js-foreach"
+			],
+			[
+				"top",
+				"topleft"
+			],
+			[
+				"fore",
+				"foreach	js-foreach"
+			],
+			[
+				"freac",
+				"foreach	js-function"
+			],
+			[
+				"fun",
+				"fun	js-function"
+			],
+			[
+				"if",
+				"if	js-if"
+			],
+			[
+				"stroke",
+				"strokeStyle"
+			],
+			[
+				"canvas",
+				"canvaswindow	js-canvas-window"
+			],
+			[
+				"inne",
+				"innerWidth"
+			],
+			[
+				"inner",
+				"innerHeight"
+			],
+			[
+				"ife",
+				"iife	js-iife"
+			],
+			[
+				"sty",
+				"stylesheet	html-stylesheet"
+			],
+			[
+				"html",
+				"html-template	html-template"
+			],
+			[
 				"vert",
 				"vertexNormals"
 			],
@@ -36,10 +192,6 @@
 				"surfaceNormals"
 			],
 			[
-				"for",
-				"for	js-for-loop"
-			],
-			[
 				"face",
 				"faceNormals"
 			],
@@ -48,16 +200,8 @@
 				"surfaceNormals"
 			],
 			[
-				"comp",
-				"computeNormal"
-			],
-			[
 				"con",
 				"console.log	js-console-log"
-			],
-			[
-				"prev",
-				"prevState"
 			],
 			[
 				"pre",
@@ -98,10 +242,6 @@
 			[
 				"inv",
 				"inverseView"
-			],
-			[
-				"in",
-				"inverseModel"
 			],
 			[
 				"inverse",
@@ -248,10 +388,6 @@
 				"coordinates"
 			],
 			[
-				"pro",
-				"profitOnDay"
-			],
-			[
 				"prof",
 				"profitPerLemon"
 			],
@@ -316,10 +452,6 @@
 				"stonesToLbs"
 			],
 			[
-				"back",
-				"background"
-			],
-			[
 				"fixe",
 				"fixedHeader"
 			],
@@ -382,138 +514,6 @@
 			[
 				"portfolio",
 				"portfolioitemoverlay"
-			],
-			[
-				"script",
-				"scriptsrc	html-scriptsrc"
-			],
-			[
-				"Open",
-				"OpenSans"
-			],
-			[
-				"Walk",
-				"Walkway"
-			],
-			[
-				"Walkw",
-				"WalkwayLight"
-			],
-			[
-				"bs",
-				"background-size"
-			],
-			[
-				"two-co",
-				"two-column-two"
-			],
-			[
-				"two-colu",
-				"two-column-one"
-			],
-			[
-				"text",
-				"text-decoration"
-			],
-			[
-				"list",
-				"list-style"
-			],
-			[
-				"img",
-				"img"
-			],
-			[
-				"backgroun",
-				"background-size"
-			],
-			[
-				"IMG",
-				"img"
-			],
-			[
-				"mysql",
-				"mysql_connect"
-			],
-			[
-				"php",
-				"php	<?php … ?>"
-			],
-			[
-				"port",
-				"portfolioitem"
-			],
-			[
-				"cell",
-				"cellUnderMouseIsInFlow"
-			],
-			[
-				"cellIsIn",
-				"cellIsInFlow"
-			],
-			[
-				"is",
-				"isFlow"
-			],
-			[
-				"las",
-				"lastRow"
-			],
-			[
-				"draw",
-				"drawCircle"
-			],
-			[
-				"row",
-				"rows"
-			],
-			[
-				"if",
-				"if	if"
-			],
-			[
-				"node",
-				"nodeUnderMouse"
-			],
-			[
-				"nod",
-				"nodeUnderMouse"
-			],
-			[
-				"last",
-				"lastState"
-			],
-			[
-				"mous",
-				"mouseInGrid"
-			],
-			[
-				"mouse",
-				"mouseIsInGrid"
-			],
-			[
-				"mou",
-				"mouseIsInGrid"
-			],
-			[
-				"rowCol",
-				"rowColTemp"
-			],
-			[
-				"circl",
-				"circleRatio"
-			],
-			[
-				"Row",
-				"rowColToTopLeftXY"
-			],
-			[
-				"stroke",
-				"strokeStyle"
-			],
-			[
-				"can",
-				"canvaswindow	js-canvas-window"
 			]
 		]
 	},
@@ -523,7 +523,23 @@
 			"file": "README.md",
 			"settings":
 			{
-				"buffer_size": 0,
+				"buffer_size": 231,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "flow.js",
+			"settings":
+			{
+				"buffer_size": 15701,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/rob/Sites/Archive/bokeh/labs/flow/test.html",
+			"settings":
+			{
+				"buffer_size": 16116,
 				"line_ending": "Unix"
 			}
 		}
@@ -531,12 +547,108 @@
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 375.0,
+		"height": 159.0,
 		"selected_items":
 		[
 			[
+				"wrap",
+				"Word Wrap: Toggle"
+			],
+			[
+				"push",
+				"Git: Push"
+			],
+			[
+				"commit",
+				"Git: Commit"
+			],
+			[
+				"add",
+				"Git: Quick Add"
+			],
+			[
+				"git",
+				"SublimeGit: Buy License"
+			],
+			[
+				"log",
+				"Git: Quick Log"
+			],
+			[
 				"pack",
+				"Package Control: Disable Package"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"list pac",
+				"Package Control: List Packages"
+			],
+			[
+				"new view",
+				"File: New View into File"
+			],
+			[
+				"comm",
+				"Git: Commit"
+			],
+			[
+				"new vi",
+				"File: New View into File"
+			],
+			[
+				"java",
+				"Set Syntax: JavaScript Next"
+			],
+			[
+				"pull",
+				"Git: Pull"
+			],
+			[
+				"pus",
+				"Git: Push"
+			],
+			[
+				"git comm",
+				"Git: Commit"
+			],
+			[
+				"amen",
+				"Git: Amend Commit"
+			],
+			[
+				"amend",
+				"Git: Amend Commit"
+			],
+			[
+				"preview",
+				"Markdown Preview: Preview in Browser"
+			],
+			[
+				"git add",
+				"Git: Add Current File"
+			],
+			[
+				"install",
 				"Package Control: Install Package"
+			],
+			[
+				"packa",
+				"Package Control: Install Package"
+			],
+			[
+				"SASS",
+				"Set Syntax: Sass"
+			],
+			[
+				"move",
+				"File: Move"
+			],
+			[
+				"check",
+				"Git: Checkout"
 			],
 			[
 				"dupl",
@@ -553,18 +665,6 @@
 			[
 				"dup",
 				"File: Duplicate"
-			],
-			[
-				"wrap",
-				"Word Wrap: Toggle"
-			],
-			[
-				"commit",
-				"Git: Commit"
-			],
-			[
-				"add",
-				"Git: Quick Add"
 			],
 			[
 				"spaces",
@@ -603,28 +703,12 @@
 				"Emmet: Rename Tag"
 			],
 			[
-				"remove",
-				"Package Control: Remove Package"
-			],
-			[
 				"ren",
 				"File: Rename"
 			],
 			[
 				"emmet",
 				"Emmet: Reflect CSS Value"
-			],
-			[
-				"pull",
-				"Git: Pull"
-			],
-			[
-				"push",
-				"Git: Push"
-			],
-			[
-				"preview",
-				"Markdown Preview: Preview in Browser"
 			],
 			[
 				"prev",
@@ -651,20 +735,12 @@
 				"Git: Merge"
 			],
 			[
-				"git add",
-				"Git: Quick Add"
-			],
-			[
 				"git log",
 				"Git: Log"
 			],
 			[
 				"git pu",
 				"Git: Push"
-			],
-			[
-				"comm",
-				"Git: Commit"
 			],
 			[
 				"commt",
@@ -689,10 +765,6 @@
 			[
 				"marko",
 				"Set Syntax: Markdown Extended"
-			],
-			[
-				"install",
-				"Package Control: Install Package"
 			],
 			[
 				"markdo",
@@ -749,14 +821,6 @@
 			[
 				"delet",
 				"File: Delete"
-			],
-			[
-				"move",
-				"File: Move"
-			],
-			[
-				"java",
-				"Javatar: Browse Commands..."
 			],
 			[
 				"reane",
@@ -997,54 +1061,6 @@
 			[
 				"match",
 				"Emmet: Match Pair (inward)"
-			],
-			[
-				"join",
-				"Snippet: js-si-anonymous-function"
-			],
-			[
-				"math",
-				"Emmet: Match Pair (inward)"
-			],
-			[
-				"pla",
-				"Set Syntax: Plain Text"
-			],
-			[
-				"line",
-				"Emmet: Merge Lines"
-			],
-			[
-				"conver",
-				"Indentation: Convert to Tabs"
-			],
-			[
-				"git",
-				"Gist: Insert Gist"
-			],
-			[
-				"indent",
-				"Indentation: Convert to Tabs"
-			],
-			[
-				"ma",
-				"Emmet: Match Pair (inward)"
-			],
-			[
-				"ints",
-				"Indentation: Convert to Spaces"
-			],
-			[
-				"jslint",
-				"JSLint: File"
-			],
-			[
-				"emmet tag",
-				"Emmet: Go to Matching Pair"
-			],
-			[
-				"jsline",
-				"JSLint: File"
 			]
 		],
 		"width": 453.0
@@ -1068,11 +1084,19 @@
 	},
 	"file_history":
 	[
+		"/Users/rob/Sites/flow/flow.js",
+		"/Users/rob/Sites/tests/webgl/mod-gl.js",
 		"/Users/rob/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/rob/Sites/flow/index.html",
+		"/Users/rob/Sites/flow/style.css",
+		"/var/folders/cp/6nnhtw9s3859x2bjpdf7g9580000gn/T/drawcircle.js",
+		"/Users/rob/Library/Application Support/Sublime Text 3/Packages/User/Gist.sublime-settings",
+		"/Users/rob/Library/Application Support/Sublime Text 3/Packages/Gist/Gist.sublime-settings",
+		"/Users/rob/Sites/flow/gulpfile.js",
+		"/Users/rob/Sites/flow/flow.sublime-project",
 		"/Users/rob/Sites/flow/.git/config",
 		"/Users/rob/.ssh/config",
 		"/Users/rob/Sites/flow/flow/.git/config",
-		"/Users/rob/Sites/tests/webgl/mod-gl.js",
 		"/Users/rob/Downloads/la.marche.de.lempereur.(2005).fre.1cd.(3497095)/La.Marche.de.l'empereur.2005.BluRay.720p.DTS.HDBRiSe_FR.srt",
 		"/Users/rob/Sites/tests/webgl/objs/cube-basic.obj",
 		"/Users/rob/Sites/tests/webgl/objs/cube.obj",
@@ -1190,7 +1214,7 @@
 	],
 	"find":
 	{
-		"height": 32.0
+		"height": 42.0
 	},
 	"find_in_files":
 	{
@@ -1207,6 +1231,54 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"console",
+			"highligh",
+			"1",
+			"flowIndex",
+			"throw",
+			"anyProposedInCurrentFlows",
+			"i",
+			"warn",
+			" flow ",
+			"flow ",
+			"posInFlow",
+			"posInProposedFlow",
+			"resize",
+			"Event)",
+			"Event",
+			"i",
+			"upEvent",
+			"downEvent",
+			"drawFlows",
+			"val",
+			"pf",
+			"drawProposedFlow",
+			"log",
+			"pf",
+			"console",
+			"board",
+			"val",
+			"0",
+			"forEach",
+			"foreach",
+			"cy",
+			"cx",
+			"compare",
+			"proposedFlow",
+			"Flow",
+			"pos",
+			"x",
+			"val",
+			"len ",
+			"len",
+			"current",
+			"Circle",
+			"width",
+			"],\n			[",
+			"},\n			{",
+			"}},",
+			"reference",
+			"name",
 			"-?",
 			"file",
 			"url",
@@ -1286,55 +1358,7 @@
 			"p>",
 			"<p>",
 			"name=\"",
-			"caption",
-			"style=",
-			"<li>",
-			"li",
-			"<li>",
-			"two",
-			"drawImage",
-			"drawPath",
-			"10000",
-			"itts",
-			"drawGrid",
-			"itts",
-			"ittsControl",
-			"ittsLog",
-			"its",
-			"cabin",
-			"walkway",
-			"walkwaylight",
-			"wat",
-			"water",
-			"p",
-			"hover",
-			"hover\\",
-			"hover",
-			"two",
-			" target=\"_blank\"",
-			"breadcrumbs",
-			"z-in",
-			"After Effects World Conference",
-			"after",
-			"After",
-			"CabinSketch",
-			"ChunkFive",
-			"base",
-			"BCHTML",
-			" target=\"_blank\"",
-			"BCHTMLROOT",
-			"portfolio",
-			"contact",
-			"about",
-			"contact",
-			"BCHTMLROOT",
-			"accessibility",
-			"150",
-			"238",
-			"span",
-			"BCHTMLROOT",
-			"td",
-			"el4"
+			"caption"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1401,7 +1425,7 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 2,
 			"sheets":
 			[
 				{
@@ -1410,23 +1434,85 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 0,
+						"buffer_size": 231,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								0,
-								0
+								231,
+								231
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Markdown Extended/Syntaxes/Markdown Extended.tmLanguage"
+							"parser": "github",
+							"syntax": "Packages/Markdown Extended/Syntaxes/Markdown Extended.tmLanguage",
+							"target": "disk"
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "flow.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 15701,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								543,
+								543
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScriptNext - ES6 Syntax/JavaScriptNext.tmLanguage",
+							"translate_tabs_to_spaces": false,
+							"word_wrap": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 762.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/Users/rob/Sites/Archive/bokeh/labs/flow/test.html",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 16116,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1471,
+								1471
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/HTML/HTML.tmLanguage",
+							"translate_tabs_to_spaces": false,
+							"word_wrap": false
+						},
+						"translation.x": 56.0,
+						"translation.y": 1282.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -1437,7 +1523,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 32.0
+		"height": 42.0
 	},
 	"input":
 	{
@@ -1493,7 +1579,7 @@
 	"project": "flow.sublime-project",
 	"replace":
 	{
-		"height": 60.0
+		"height": 76.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -1502,16 +1588,16 @@
 		"selected_items":
 		[
 			[
+				"index",
+				"Development/index.html"
+			],
+			[
 				"css",
 				"style/style.css"
 			],
 			[
 				"about",
 				"about.html"
-			],
-			[
-				"index",
-				"index.html"
 			],
 			[
 				"hallo",
@@ -1758,7 +1844,7 @@
 	"show_minimap": true,
 	"show_open_files": false,
 	"show_tabs": true,
-	"side_bar_visible": true,
+	"side_bar_visible": false,
 	"side_bar_width": 195.0,
 	"status_bar_visible": true,
 	"template_settings":

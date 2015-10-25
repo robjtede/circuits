@@ -5,36 +5,56 @@ document.body.appendChild(document.createElement("canvas"));
 var ctx = document.querySelector("canvas").getContext("2d");
 
 // initialize vars
-var w, h, size, cellSize, down, touchId, proposedFlowColor, proposedFlowEnd;
+var w, h, size, cellSize, down, touchId, proposedFlowColor, proposedFlowEnd, availableCells, flowsComplete, cellProportion, proportionFilled;
 
-var colors = ["red", "green", "blue", "yellow", "orange"];
-var board = {
-	size: 5,
+var colors = ["red", "blue", "yellow", "purple", "cyan", "rgb(255,100,200)", "grey", "white", "orange", "brown", "green", "rgb(50,255,20)"];
+
+board = {
+	size: 10,
 	nodes: [
-		[
-			{x: 0, y:0},
-			{x: 1, y:4}
-			
-		], [
-			{x: 2, y:0},
-			{x: 1, y:3}
-			
-		], [
-			{x: 2, y:1},
-			{x: 2, y:4}
-			
-		], [
-			{x: 4, y:0},
-			{x: 3, y:3}
-			
-		], [
-			{x: 4, y:1},
-			{x: 3, y:4}
-			
-		]
-		
+		[{x:0, y:0}, {x:2, y:6}],
+		[{x:5, y:0}, {x:9, y:0}],
+		[{x:0, y:7}, {x:1, y:9}],
+		[{x:1, y:8}, {x:4, y:9}],
+		[{x:1, y:3}, {x:9, y:6}],
+		[{x:1, y:7}, {x:8, y:5}],
+		[{x:2, y:2}, {x:3, y:1}],
+		[{x:2, y:3}, {x:6, y:3}],
+		[{x:3, y:3}, {x:6, y:4}],
+		[{x:1, y:4}, {x:6, y:8}],
+		[{x:3, y:2}, {x:8, y:4}],
+		[{x:5, y:6}, {x:8, y:8}]
 	]
+	
 }; // game settings object
+
+// var board = {
+// 	size: 5,
+// 	nodes: [
+// 		[
+// 			{x: 0, y:0},
+// 			{x: 1, y:4}
+			
+// 		], [
+// 			{x: 2, y:0},
+// 			{x: 1, y:3}
+			
+// 		], [
+// 			{x: 2, y:1},
+// 			{x: 2, y:4}
+			
+// 		], [
+// 			{x: 4, y:0},
+// 			{x: 3, y:3}
+			
+// 		], [
+// 			{x: 4, y:1},
+// 			{x: 3, y:4}
+			
+// 		]
+		
+// 	]
+// }; // game settings object
 
 var prevFlows = []; // last state of flows - background drawing
 var currentFlows = []; // dynamic current state of slows - foreground drawing
@@ -56,6 +76,14 @@ Array.prototype.last = function () {
 	return last;
 	
 }// Array.last()
+
+Array.prototype.first = function () {
+	
+	var last = this[0];
+	
+	return last;
+	
+}// Array.first()
 
 function drawGrid(cells) {
 	
@@ -210,7 +238,7 @@ function drawProposedFlow() {
 		
 		ctx.save();
 		ctx.strokeStyle = proposedFlowColor;
-		ctx.lineWidth = 35;
+		ctx.lineWidth = cellSize * 0.3;
 		ctx.lineJoin = "round";
 		ctx.lineCap = "round";
 		
@@ -242,7 +270,7 @@ function drawFlows() {
 		if (currentFlows.length === 0) throw new Error("flows empty");
 		
 		ctx.save();
-		ctx.lineWidth = 35;
+		ctx.lineWidth = cellSize * 0.3;
 		ctx.lineJoin = "round";
 		ctx.lineCap = "round";
 		
@@ -449,6 +477,22 @@ function restoreFlows() {
 	
 }// restoreFlows()
 
+function calculateProportionFilled() {
+	
+	var total = 0;
+	
+	prevFlows.forEach(function (val, index) {
+		total += val.points.length;
+	});
+	
+	total += proposedFlow.length;
+	
+	total *= cellProportion;
+	
+	return total;
+	
+}// calculateProportionFilled()
+
 function moveEvent(event) {
 	event.preventDefault();
 	if (!down) return false;
@@ -567,6 +611,17 @@ function upEvent(event) {
 		updateBoard();
 		
 	} catch (e) { console.warn("updateBoard errored"); }
+	
+	// game complete checks
+	if (Math.round(proportionFilled * 100) === 100) {
+		
+		ctx.save();
+		ctx.font = "100px Arial";
+		ctx.fillStyle = "white";
+		ctx.fillText("WELL DONE", 200, 200);
+		ctx.restore();
+		
+	}
 	
 }// upEvent()
 
@@ -699,6 +754,17 @@ function upTouchEvent(event) {
 		
 	} catch (e) { console.warn("updateBoard errored"); }
 	
+	// game complete checks
+	if (Math.round(proportionFilled * 100) === 100) {
+		
+		ctx.save();
+		ctx.font = "100px Arial";
+		ctx.fillStyle = "white";
+		ctx.fillText("WELL DONE", 200, 200);
+		ctx.restore();
+		
+	}
+	
 }// upTouchEvent()
 
 function updateBoard() {
@@ -708,6 +774,8 @@ function updateBoard() {
 	drawNodes();
 	drawFlows();
 	drawProposedFlow();
+	
+	proportionFilled = calculateProportionFilled();
 	
 }
 
@@ -722,6 +790,9 @@ function init() {
 	
 	proposedFlowColor = false;
 	proposedFlowEnd = false;
+	
+	availableCells = board.size * board.size;
+	cellProportion = 1 / availableCells;
 	
 	clear();
 	drawGrid();

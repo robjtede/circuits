@@ -3,7 +3,19 @@
 	[
 		{
 			"follow_symlinks": true,
-			"path": "/Users/rob/Sites/tests/webgl"
+			"path": "/Users/rob/Development/Java/Assignments"
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/rob/Development/Java/Exercise Sheets"
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/rob/Development/Java/Problem Sheets"
+		},
+		{
+			"follow_symlinks": true,
+			"path": "/Users/rob/Development/Java/sheffield"
 		}
 	]
 }

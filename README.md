@@ -8,5 +8,5 @@
 * Handle window resize
 * Level design/creator tool
 * Database system
+* Check amount of flows completed
 * Assume straight line behavior
-* Check proportion of board filled
