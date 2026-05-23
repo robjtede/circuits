@@ -22,6 +22,46 @@ Create a production build:
 npm run build
 ```
 
+### Puzzle solver
+
+Check whether a potential grid is solvable:
+
+```sh
+just solve -- --grid 'A...A/B...B/C...C/D...D/E...E'
+```
+
+Generate a solvable grid:
+
+```sh
+just generate -- 8 --pairs 8 --seed 42
+```
+
+The solver is a dependency-free Rust Cargo project in `puzzle-solver/`.
+The `just solve` and `just generate` recipes run it with `cargo run --release`,
+so Cargo handles
+rebuilds and caches the optimized binary under `puzzle-solver/target/`.
+
+Grid rules:
+
+- Each endpoint label must appear exactly twice.
+- Empty cells are `.`, `_`, or `-`.
+- Rows can be separated by newlines, `/`, commas, or semicolons.
+- Whitespace is ignored.
+
+You can also pass a file or pipe a grid through stdin:
+
+```sh
+just solve -- puzzles/candidate.txt
+just solve -- --quiet < puzzles/candidate.txt
+```
+
+Exit code `0` means solvable, `1` means unsolvable, and `2` means invalid input or
+the search timed out. Use `--timeout-ms 0` to disable the default 30 second timeout.
+
+Generated puzzles are built from complete solution paths, enforce non-adjacent
+endpoints, and are solver-verified by default. Use `--solution` to print the
+generated full solution, or `--no-verify` to skip the solver check.
+
 Build the container image:
 
 ```sh
