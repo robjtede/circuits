@@ -1,0 +1,2 @@
+fmt:
+	npm run format
