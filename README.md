@@ -22,6 +22,18 @@ Create a production build:
 npm run build
 ```
 
+Build the container image:
+
+```sh
+docker build -t flow .
+```
+
+Run the container locally:
+
+```sh
+docker run --rm -p 8080:80 flow
+```
+
 ### Known Issues
 
 - Mouse/touch events need re-factoring
