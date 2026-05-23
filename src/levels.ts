@@ -99,20 +99,10 @@ export var levelGroups: LevelGroup[] = [
   ]),
 ];
 
-/**
- * @param {PathMode} mode
- * @param {number[]} lengths
- * @returns {LevelRecipe}
- */
 function recipe(mode: PathMode, lengths: number[]): LevelRecipe {
   return { mode: mode, lengths: lengths };
 }
 
-/**
- * @param {number} size
- * @param {LevelRecipe[]} recipes
- * @returns {LevelGroup}
- */
 function levelGroup(size: number, recipes: LevelRecipe[]): LevelGroup {
   if (recipes.length !== 10) {
     throw new Error(size + "x" + size + " must contain exactly 10 levels");
@@ -127,12 +117,6 @@ function levelGroup(size: number, recipes: LevelRecipe[]): LevelGroup {
   };
 }
 
-/**
- * @param {number} size
- * @param {number} index
- * @param {LevelRecipe} levelRecipe
- * @returns {Level}
- */
 function levelFromRecipe(
   size: number,
   index: number,
@@ -169,19 +153,10 @@ function levelFromRecipe(
   return level(size + "-" + number, "Level " + number, size, pairs);
 }
 
-/**
- * @param {number} number
- * @returns {string}
- */
 function padLevelNumber(number: number): string {
   return String(number).padStart(2, "0");
 }
 
-/**
- * @param {number} size
- * @param {PathMode} mode
- * @returns {Cell[]}
- */
 function switchbackPath(size: number, mode: PathMode): Cell[] {
   var path: Cell[];
 
@@ -208,12 +183,6 @@ function switchbackPath(size: number, mode: PathMode): Cell[] {
   return path;
 }
 
-/**
- * @param {number} size
- * @param {Cell[]} path
- * @param {PathMode} mode
- * @returns {void}
- */
 function validateSolutionPath(
   size: number,
   path: Cell[],
@@ -250,12 +219,6 @@ function validateSolutionPath(
   });
 }
 
-/**
- * @param {number} size
- * @param {Cell[]} segment
- * @param {string} label
- * @returns {void}
- */
 function validateSolutionSegment(
   size: number,
   segment: Cell[],
@@ -281,10 +244,6 @@ function validateSolutionSegment(
   }
 }
 
-/**
- * @param {number} size
- * @returns {Cell[]}
- */
 function rowSwitchback(size: number): Cell[] {
   var path: Cell[] = [];
 
@@ -299,10 +258,6 @@ function rowSwitchback(size: number): Cell[] {
   return path;
 }
 
-/**
- * @param {number} size
- * @returns {Cell[]}
- */
 function columnSwitchback(size: number): Cell[] {
   var path: Cell[] = [];
 
@@ -317,10 +272,6 @@ function columnSwitchback(size: number): Cell[] {
   return path;
 }
 
-/**
- * @param {number} size
- * @returns {Cell[]}
- */
 function spiralPath(size: number): Cell[] {
   var path: Cell[] = [];
   var left = 0;
@@ -349,10 +300,6 @@ function spiralPath(size: number): Cell[] {
   return path;
 }
 
-/**
- * @param {number} size
- * @returns {Cell[]}
- */
 function combPath(size: number): Cell[] {
   var path: Cell[] = [];
   var bottom = size - 1;
@@ -375,13 +322,6 @@ function combPath(size: number): Cell[] {
   return path;
 }
 
-/**
- * @param {string} id
- * @param {string} name
- * @param {number} size
- * @param {CellPair[]} pairs
- * @returns {Level}
- */
 function level(
   id: string,
   name: string,

@@ -3,22 +3,16 @@ import type { LevelBoard, Point } from "./types";
 var storagePrefix = "circuits.progress.";
 var completionStoragePrefix = "circuits.completed.";
 
-/**
- * @param {string} groupId
- * @param {string} levelId
- * @returns {string}
- */
-export function progressStorageKey(groupId: string, levelId: string): string {
-  return storagePrefix + groupId + "." + levelId;
+export function progressStorageKey(level: LevelBoard): string {
+  return storagePrefix + gridHash(level);
 }
 
-/**
- * @param {string} groupId
- * @param {string} levelId
- * @returns {string}
- */
 export function completionStorageKey(level: LevelBoard): string {
-  return completionStoragePrefix + sha256(gridFingerprint(level));
+  return completionStoragePrefix + gridHash(level);
+}
+
+function gridHash(level: LevelBoard): string {
+  return sha256(gridFingerprint(level));
 }
 
 function gridFingerprint(level: LevelBoard): string {

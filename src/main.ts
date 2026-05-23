@@ -2,6 +2,7 @@ import "./styles.css";
 import { colors, cloneLevel, levelGroups } from "./levels";
 import { completionStorageKey, progressStorageKey } from "./storage";
 import type {
+  Cell,
   Circuit,
   CircuitPosition,
   Level,
@@ -77,31 +78,18 @@ var prevCircuits: Circuit[] = []; // last state of circuits - background drawing
 var currentCircuits: Circuit[] = []; // dynamic current state of circuits - foreground drawing
 var proposedCircuit: Point[] = []; // circuit being drawn
 
-/**
- * @returns {LevelGroup}
- */
 function currentGroup(): LevelGroup {
   return levelGroups[currentGroupIndex];
 }
 
-/**
- * @returns {Level}
- */
 function currentLevel(): Level {
   return currentGroup().levels[currentLevelIndex];
 }
 
-/**
- * @returns {string}
- */
 function storageKey(): string {
-  return progressStorageKey(currentGroup().id, currentLevel().id);
+  return progressStorageKey(currentLevel());
 }
 
-/**
- * @param {Circuit[]} circuits
- * @returns {Circuit[]}
- */
 function cloneCircuits(circuits: Circuit[]): Circuit[] {
   return circuits.map(function (circuit) {
     return {
@@ -113,9 +101,17 @@ function cloneCircuits(circuits: Circuit[]): Circuit[] {
   });
 }
 
-/**
- * @returns {void}
- */
+function compactCircuits(circuits: Circuit[]): SavedCircuit[] {
+  return circuits.map(function (circuit) {
+    return {
+      color: circuit.color,
+      points: circuit.points.map(function (point) {
+        return [point.x, point.y];
+      }),
+    };
+  });
+}
+
 function saveCurrentProgress() {
   try {
     if (prevCircuits.length === 0) {
@@ -127,34 +123,24 @@ function saveCurrentProgress() {
       storageKey(),
       JSON.stringify({
         version: 1,
-        circuits: cloneCircuits(prevCircuits),
+        circuits: compactCircuits(prevCircuits),
       }),
     );
   } catch (e) {}
 }
 
-/**
- * @returns {void}
- */
 function clearSavedProgress() {
   try {
     localStorage.removeItem(storageKey());
   } catch (e) {}
 }
 
-/**
- * @returns {void}
- */
 function saveCurrentCompletion() {
   try {
     localStorage.setItem(completionStorageKey(currentLevel()), "1");
   } catch (e) {}
 }
 
-/**
- * @param {Level} level
- * @returns {boolean}
- */
 function isLevelCompleted(level: Level): boolean {
   try {
     if (localStorage.getItem(completionStorageKey(level)) === "1") {
@@ -167,15 +153,10 @@ function isLevelCompleted(level: Level): boolean {
   }
 }
 
-/**
- * @param {Level} level
- * @returns {boolean}
- */
 function isSavedProgressComplete(level: Level): boolean {
   try {
     var saved = JSON.parse(
-      localStorage.getItem(progressStorageKey(currentGroup().id, level.id)) ||
-        "null",
+      localStorage.getItem(progressStorageKey(level)) || "null",
     );
 
     if (!saved || !Array.isArray(saved.circuits)) return false;
@@ -192,9 +173,6 @@ function isSavedProgressComplete(level: Level): boolean {
   }
 }
 
-/**
- * @returns {void}
- */
 function loadSavedProgress(): void {
   try {
     var saved = JSON.parse(localStorage.getItem(storageKey()) || "null");
@@ -213,10 +191,6 @@ function loadSavedProgress(): void {
   }
 }
 
-/**
- * @param {any} circuit
- * @returns {Circuit | false}
- */
 function sanitizeSavedCircuit(circuit: any): Circuit | false {
   var colorIndex = colors.indexOf(circuit.color);
 
@@ -233,10 +207,9 @@ function sanitizeSavedCircuit(circuit: any): Circuit | false {
 
   for (var i = 0; i < circuit.points.length; i++) {
     var point = circuit.points[i];
+    var nextPoint = parseSavedPoint(point);
 
-    if (!isValidSavedPoint(point)) return false;
-
-    var nextPoint = { x: point.x, y: point.y };
+    if (!nextPoint) return false;
 
     if (
       points.length > 0 &&
@@ -251,19 +224,27 @@ function sanitizeSavedCircuit(circuit: any): Circuit | false {
   return { color: circuit.color, points: points };
 }
 
-/**
- * @param {any} point
- * @returns {boolean}
- */
-function isValidSavedPoint(point: any): point is Point {
+function parseSavedPoint(point: any): Point | false {
+  if (!isValidSavedPoint(point)) return false;
+
+  if (Array.isArray(point)) {
+    return { x: point[0], y: point[1] };
+  }
+
+  return { x: point.x, y: point.y };
+}
+
+function isValidSavedPoint(point: any): boolean {
+  var x = Array.isArray(point) ? point[0] : point?.x;
+  var y = Array.isArray(point) ? point[1] : point?.y;
+
   return (
-    point &&
-    Number.isInteger(point.x) &&
-    Number.isInteger(point.y) &&
-    point.x >= 0 &&
-    point.x < board.size &&
-    point.y >= 0 &&
-    point.y < board.size
+    Number.isInteger(x) &&
+    Number.isInteger(y) &&
+    x >= 0 &&
+    x < board.size &&
+    y >= 0 &&
+    y < board.size
   );
 }
 
@@ -271,9 +252,8 @@ function isCircuit(circuit: Circuit | false): circuit is Circuit {
   return circuit !== false;
 }
 
-/**
- * @returns {void}
- */
+type SavedCircuit = { color: string; points: Cell[] };
+
 function populateGroupSelect() {
   groupSelect.textContent = "";
 
@@ -285,9 +265,6 @@ function populateGroupSelect() {
   });
 }
 
-/**
- * @returns {void}
- */
 function populateLevelList() {
   levelList.textContent = "";
 
@@ -326,10 +303,6 @@ function populateLevelList() {
   });
 }
 
-/**
- * @param {string} groupId
- * @returns {void}
- */
 function selectGroup(groupId: string): void {
   var nextGroupIndex = levelGroups.findIndex(function (candidate) {
     return candidate.id === groupId;
@@ -342,10 +315,6 @@ function selectGroup(groupId: string): void {
   openLevel();
 }
 
-/**
- * @param {string} levelId
- * @returns {void}
- */
 function selectLevel(levelId: string): void {
   var nextLevelIndex = currentGroup().levels.findIndex(function (candidate) {
     return candidate.id === levelId;
@@ -356,9 +325,6 @@ function selectLevel(levelId: string): void {
   openLevel();
 }
 
-/**
- * @returns {void}
- */
 function openLevel() {
   down = false;
   touchId = undefined;
@@ -374,17 +340,11 @@ function openLevel() {
   if (completed) drawCompletionMessage();
 }
 
-/**
- * @returns {void}
- */
 function resetGame() {
   clearSavedProgress();
   openLevel();
 }
 
-/**
- * @returns {void}
- */
 function nextLevel() {
   currentLevelIndex++;
 
@@ -398,9 +358,6 @@ function nextLevel() {
   openLevel();
 }
 
-/**
- * @returns {void}
- */
 function updateControls() {
   var levelNumber = currentLevelIndex + 1;
   var isLastInGroup = currentLevelIndex === currentGroup().levels.length - 1;
@@ -416,9 +373,6 @@ function updateControls() {
   nextButton.disabled = !completed;
 }
 
-/**
- * @returns {void}
- */
 function completeLevel() {
   if (completed) return;
 
@@ -429,18 +383,10 @@ function completeLevel() {
   drawCompletionMessage();
 }
 
-/**
- * @returns {void}
- */
 function clear(): void {
   ctx.clearRect(0, 0, w, h);
 } // clear()
 
-/**
- * @template T
- * @this {T[]}
- * @returns {T | undefined}
- */
 Array.prototype.last = function () {
   var len = this.length;
   var last = this[len - 1];
@@ -448,21 +394,12 @@ Array.prototype.last = function () {
   return last;
 }; // Array.last()
 
-/**
- * @template T
- * @this {T[]}
- * @returns {T | undefined}
- */
 Array.prototype.first = function () {
   var last = this[0];
 
   return last;
 }; // Array.first()
 
-/**
- * @param {unknown} [cells]
- * @returns {void}
- */
 function drawGrid(cells?: unknown): void {
   for (var i = 0; i <= board.size; i++) {
     // vertical lines
@@ -485,9 +422,6 @@ function drawGrid(cells?: unknown): void {
   } // for i
 } // grid()
 
-/**
- * @returns {void}
- */
 function drawNodes(): void {
   board.nodes.forEach(function (val, index) {
     drawNode(val[0].x, val[0].y, colors[index]);
@@ -495,12 +429,6 @@ function drawNodes(): void {
   }); // nodes forEach
 } // drawNodes()
 
-/**
- * @param {number} x
- * @param {number} y
- * @param {string} [color]
- * @returns {void}
- */
 function drawNode(x: number, y: number, color = "white"): void {
   var pos = centerPos(x, y);
 
@@ -515,11 +443,6 @@ function drawNode(x: number, y: number, color = "white"): void {
   ctx.restore();
 } // drawNode()
 
-/**
- * @param {number} cx
- * @param {number} cy
- * @returns {Point}
- */
 function centerPos(cx: number, cy: number): Point {
   var x = w / 2 - size / 2 + cx * cellSize + cellSize / 2;
   var y = h / 2 - size / 2 + cy * cellSize + cellSize / 2;
@@ -527,11 +450,6 @@ function centerPos(cx: number, cy: number): Point {
   return { x: x, y: y };
 } // centerPos()
 
-/**
- * @param {number} cx
- * @param {number} cy
- * @returns {Point}
- */
 function topLeftPos(cx: number, cy: number): Point {
   var x = w / 2 - size / 2 + cx * cellSize;
   var y = h / 2 - size / 2 + cy * cellSize;
@@ -539,11 +457,6 @@ function topLeftPos(cx: number, cy: number): Point {
   return { x: x, y: y };
 } // centerPos()
 
-/**
- * @param {number} cx
- * @param {number} cy
- * @returns {Point}
- */
 function posToCell(cx: number, cy: number): Point {
   var canvasRect = ctx.canvas.getBoundingClientRect();
   var x = cx - canvasRect.left;
@@ -565,11 +478,6 @@ function posToCell(cx: number, cy: number): Point {
   return { x: x, y: y };
 } // posToCell()
 
-/**
- * @param {Point} c1
- * @param {Point} c2
- * @returns {boolean}
- */
 function compareCoords(c1: Point | undefined, c2: Point | undefined): boolean {
   if (!c1 || !c2) return false;
   if (c1.x !== c2.x) return false;
@@ -577,11 +485,6 @@ function compareCoords(c1: Point | undefined, c2: Point | undefined): boolean {
   return true;
 } // compareCoords()
 
-/**
- * @param {Point} c1
- * @param {Point} c2
- * @returns {boolean}
- */
 function isAdjacent(c1: Point | undefined, c2: Point | undefined): boolean {
   if (!c1 || !c2) return false;
   if (
@@ -595,11 +498,6 @@ function isAdjacent(c1: Point | undefined, c2: Point | undefined): boolean {
   return false;
 } // isAdjacent()
 
-/**
- * @param {number} x
- * @param {number} y
- * @returns {boolean}
- */
 function isNode(x: number, y: number): boolean {
   var found = false;
 
@@ -611,11 +509,6 @@ function isNode(x: number, y: number): boolean {
   return found;
 } // isNode()
 
-/**
- * @param {number} x
- * @param {number} y
- * @returns {string | false}
- */
 function nodeColor(x: number, y: number): string | false {
   var found: string | false = false;
 
@@ -627,9 +520,6 @@ function nodeColor(x: number, y: number): string | false {
   return found;
 } // nodeColor()
 
-/**
- * @returns {void}
- */
 function drawProposedCircuit() {
   try {
     if (proposedCircuit.length === 0) throw new Error("proposed circuit empty");
@@ -657,9 +547,6 @@ function drawProposedCircuit() {
   } catch (e) {}
 } // drawProposedCircuit()
 
-/**
- * @returns {void}
- */
 function drawCircuits() {
   try {
     if (currentCircuits.length === 0) throw new Error("circuits empty");
@@ -703,9 +590,6 @@ function drawCircuits() {
   } catch (e) {}
 } // drawCircuits()
 
-/**
- * @returns {void}
- */
 function drawCompletionMessage() {
   ctx.save();
   ctx.fillStyle = "white";
@@ -716,11 +600,6 @@ function drawCompletionMessage() {
   ctx.restore();
 }
 
-/**
- * @param {number} x
- * @param {number} y
- * @returns {boolean}
- */
 function isMatchingNode(x: number, y: number): boolean {
   if (!isNode(x, y)) return false; // error - not a node
 
@@ -732,11 +611,6 @@ function isMatchingNode(x: number, y: number): boolean {
   return false;
 } // isMatchingNode()
 
-/**
- * @param {number} x
- * @param {number} y
- * @returns {boolean}
- */
 function isInProposedCircuit(x: number, y: number): boolean {
   var found = false;
 
@@ -749,11 +623,6 @@ function isInProposedCircuit(x: number, y: number): boolean {
   return found;
 } // posInProposedCircuit()
 
-/**
- * @param {number} x
- * @param {number} y
- * @returns {CircuitPosition | false}
- */
 function posInCircuits(x: number, y: number): CircuitPosition | false {
   var found: CircuitPosition | false = false;
 
@@ -767,10 +636,6 @@ function posInCircuits(x: number, y: number): CircuitPosition | false {
   return found;
 } // posInCircuits()
 
-/**
- * @param {string | false | undefined} color
- * @returns {number | false}
- */
 function colorInCircuits(color: string | false | undefined): number | false {
   var found: number | false = false;
 
@@ -782,11 +647,6 @@ function colorInCircuits(color: string | false | undefined): number | false {
   return found;
 } // colorInCircuits()
 
-/**
- * @param {number} x
- * @param {number} y
- * @returns {number | false}
- */
 function posInProposedCircuit(x: number, y: number): number | false {
   // if (proposedCircuit.length == 2) return false;
   var found: number | false = false;
@@ -800,9 +660,6 @@ function posInProposedCircuit(x: number, y: number): number | false {
   return found;
 } // isInProposedCircuit()
 
-/**
- * @returns {CircuitPosition[] | false}
- */
 function anyProposedInCurrentCircuits(): CircuitPosition[] | false {
   var slices: CircuitPosition[] = [];
 
@@ -831,9 +688,6 @@ function anyProposedInCurrentCircuits(): CircuitPosition[] | false {
   return slices;
 } // anyProposedInCurrentCircuits()
 
-/**
- * @returns {void}
- */
 function backupCircuits() {
   prevCircuits = [];
   var newCircuits: Circuit[] = [];
@@ -852,9 +706,6 @@ function backupCircuits() {
   proposedCircuit = [];
 } // backupCircuits()
 
-/**
- * @returns {void}
- */
 function restoreCircuits() {
   currentCircuits = [];
   var newCircuits: Circuit[] = [];
@@ -877,9 +728,6 @@ function restoreCircuits() {
   currentCircuits = newCircuits;
 } // restoreCircuits()
 
-/**
- * @returns {number}
- */
 function calculateProportionFilled(): number {
   var total = 0;
 
@@ -894,10 +742,6 @@ function calculateProportionFilled(): number {
   return total;
 } // calculateProportionFilled()
 
-/**
- * @param {MouseEvent} event
- * @returns {false | void}
- */
 function moveEvent(event: MouseEvent): false | void {
   if (!down) return false;
   event.preventDefault();
@@ -945,10 +789,6 @@ function moveEvent(event: MouseEvent): false | void {
   } catch (e) {}
 } // moveEvent()
 
-/**
- * @param {MouseEvent} event
- * @returns {void}
- */
 function downEvent(event: MouseEvent): void {
   if (event.button !== 0) return;
   if (event.target !== ctx.canvas) return;
@@ -991,10 +831,6 @@ function downEvent(event: MouseEvent): void {
   saveCurrentProgress();
 } // downEvent()
 
-/**
- * @param {MouseEvent} event
- * @returns {void}
- */
 function upEvent(event: MouseEvent): void {
   if (!down && proposedCircuit.length === 0) return;
   event.preventDefault();
@@ -1023,10 +859,6 @@ function upEvent(event: MouseEvent): void {
   }
 } // upEvent()
 
-/**
- * @param {TouchEvent} event
- * @returns {false | void}
- */
 function moveTouchEvent(event: TouchEvent): false | void {
   if (!down) return false;
   event.preventDefault();
@@ -1082,10 +914,6 @@ function moveTouchEvent(event: TouchEvent): false | void {
   } catch (e) {}
 } // moveTouchEvent()
 
-/**
- * @param {TouchEvent} event
- * @returns {void}
- */
 function downTouchEvent(event: TouchEvent): void {
   if (event.target !== ctx.canvas) return;
   event.preventDefault();
@@ -1135,10 +963,6 @@ function downTouchEvent(event: TouchEvent): void {
   saveCurrentProgress();
 } // downTouchEvent()
 
-/**
- * @param {TouchEvent} event
- * @returns {void}
- */
 function upTouchEvent(event: TouchEvent): void {
   if (!down && proposedCircuit.length === 0) return;
   event.preventDefault();
@@ -1170,9 +994,6 @@ function upTouchEvent(event: TouchEvent): void {
   }
 } // upTouchEvent()
 
-/**
- * @returns {void}
- */
 function updateBoard() {
   clear();
   drawGrid();
@@ -1184,9 +1005,6 @@ function updateBoard() {
   if (completed) drawCompletionMessage();
 }
 
-/**
- * @returns {void}
- */
 function resizeCanvas() {
   var canvasRect = ctx.canvas.getBoundingClientRect();
   var nextW = Math.max(1, canvasRect.width);
@@ -1206,9 +1024,6 @@ function resizeCanvas() {
   updateBoard();
 }
 
-/**
- * @returns {void}
- */
 function init() {
   proposedCircuitColor = false;
   proposedCircuitEnd = false;
