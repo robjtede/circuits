@@ -14,6 +14,7 @@ import type {
 var app = document.createElement("main");
 var toolbar = document.createElement("div");
 var playArea = document.createElement("div");
+var boardArea = document.createElement("div");
 var groupLabel = document.createElement("label");
 var groupSelect = document.createElement("select");
 var levelSidebar = document.createElement("aside");
@@ -23,10 +24,17 @@ var progressStatus = document.createElement("p");
 var nextButton = document.createElement("button");
 var resetButton = document.createElement("button");
 var canvas = document.createElement("canvas");
+var completionOverlay = document.createElement("div");
+var completionPanel = document.createElement("div");
+var completionTitle = document.createElement("h2");
+var completionActions = document.createElement("div");
+var completionNextButton = document.createElement("button");
+var completionCloseButton = document.createElement("button");
 
 app.className = "game";
 toolbar.className = "toolbar";
 playArea.className = "play-area";
+boardArea.className = "board-area";
 groupLabel.textContent = "Size";
 groupLabel.htmlFor = "group-select";
 groupSelect.id = "group-select";
@@ -39,11 +47,25 @@ nextButton.type = "button";
 nextButton.textContent = "Next";
 resetButton.type = "button";
 resetButton.textContent = "Reset";
+completionOverlay.className = "completion-overlay";
+completionOverlay.hidden = true;
+completionPanel.className = "completion-panel";
+completionTitle.className = "completion-title";
+completionTitle.textContent = "Level Complete";
+completionActions.className = "completion-actions";
+completionNextButton.type = "button";
+completionNextButton.textContent = "Next";
+completionCloseButton.type = "button";
+completionCloseButton.textContent = "Close";
 
 groupLabel.appendChild(groupSelect);
 levelSidebar.append(levelSidebarTitle, levelList);
 toolbar.append(groupLabel, progressStatus, nextButton, resetButton);
-playArea.append(levelSidebar, canvas);
+completionActions.append(completionNextButton, completionCloseButton);
+completionPanel.append(completionTitle, completionActions);
+completionOverlay.appendChild(completionPanel);
+boardArea.append(canvas, completionOverlay);
+playArea.append(levelSidebar, boardArea);
 app.append(toolbar, playArea);
 document.body.appendChild(app);
 
@@ -329,6 +351,7 @@ function openLevel() {
   down = false;
   touchId = undefined;
   completed = false;
+  hideCompletionOverlay();
   prevCircuits = [];
   currentCircuits = [];
   proposedCircuit = [];
@@ -337,7 +360,7 @@ function openLevel() {
   completed = Math.round(proportionFilled * 100) === 100;
   updateControls();
   populateLevelList();
-  if (completed) drawCompletionMessage();
+  if (completed) showCompletionOverlay();
 }
 
 function resetGame() {
@@ -367,9 +390,9 @@ function updateControls() {
     " level " +
     levelNumber +
     " of " +
-    currentGroup().levels.length +
-    (completed ? " complete" : "");
+    currentGroup().levels.length;
   nextButton.textContent = isLastInGroup ? "Next Size" : "Next";
+  completionNextButton.textContent = nextButton.textContent;
   nextButton.disabled = !completed;
 }
 
@@ -380,7 +403,15 @@ function completeLevel() {
   saveCurrentCompletion();
   updateControls();
   populateLevelList();
-  drawCompletionMessage();
+  showCompletionOverlay();
+}
+
+function showCompletionOverlay() {
+  completionOverlay.hidden = false;
+}
+
+function hideCompletionOverlay() {
+  completionOverlay.hidden = true;
 }
 
 function clear(): void {
@@ -590,16 +621,6 @@ function drawCircuits() {
   } catch (e) {}
 } // drawCircuits()
 
-function drawCompletionMessage() {
-  ctx.save();
-  ctx.fillStyle = "white";
-  ctx.font = Math.round(Math.min(w, h) * 0.1) + "px Arial";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("WELL DONE", w / 2, h / 2);
-  ctx.restore();
-}
-
 function isMatchingNode(x: number, y: number): boolean {
   if (!isNode(x, y)) return false; // error - not a node
 
@@ -796,6 +817,7 @@ function downEvent(event: MouseEvent): void {
 
   down = true;
   completed = false;
+  hideCompletionOverlay();
   updateControls();
 
   try {
@@ -921,6 +943,7 @@ function downTouchEvent(event: TouchEvent): void {
   touchId = event.touches[0].identifier;
   down = true;
   completed = false;
+  hideCompletionOverlay();
   updateControls();
 
   try {
@@ -1002,7 +1025,6 @@ function updateBoard() {
   drawProposedCircuit();
 
   proportionFilled = calculateProportionFilled();
-  if (completed) drawCompletionMessage();
 }
 
 function resizeCanvas() {
@@ -1058,3 +1080,5 @@ groupSelect.addEventListener("change", function (event: Event) {
 
 resetButton.addEventListener("click", resetGame);
 nextButton.addEventListener("click", nextLevel);
+completionNextButton.addEventListener("click", nextLevel);
+completionCloseButton.addEventListener("click", hideCompletionOverlay);
