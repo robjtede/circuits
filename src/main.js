@@ -147,6 +147,7 @@ var board = cloneLevel(currentLevel());
 var prevFlows = []; // last state of flows - background drawing
 var currentFlows = []; // dynamic current state of slows - foreground drawing
 var proposedFlow = []; // flow being drawn
+var storagePrefix = "flow.progress.";
 
 function recipe(mode, lengths) {
   return { mode: mode, lengths: lengths };
@@ -279,6 +280,108 @@ function currentLevel() {
   return currentGroup().levels[currentLevelIndex];
 }
 
+function storageKey() {
+  return storagePrefix + currentGroup().id + "." + currentLevel().id;
+}
+
+function cloneFlows(flows) {
+  return flows.map(function (flow) {
+    return {
+      color: flow.color,
+      points: flow.points.map(function (point) {
+        return { x: point.x, y: point.y };
+      }),
+    };
+  });
+}
+
+function saveCurrentProgress() {
+  try {
+    if (prevFlows.length === 0) {
+      localStorage.removeItem(storageKey());
+      return;
+    }
+
+    localStorage.setItem(
+      storageKey(),
+      JSON.stringify({
+        version: 1,
+        flows: cloneFlows(prevFlows),
+      }),
+    );
+  } catch (e) {}
+}
+
+function clearSavedProgress() {
+  try {
+    localStorage.removeItem(storageKey());
+  } catch (e) {}
+}
+
+function loadSavedProgress() {
+  try {
+    var saved = JSON.parse(localStorage.getItem(storageKey()));
+
+    if (!saved || !Array.isArray(saved.flows)) return;
+
+    prevFlows = saved.flows
+      .map(function (flow) {
+        return sanitizeSavedFlow(flow);
+      })
+      .filter(Boolean);
+    currentFlows = cloneFlows(prevFlows);
+  } catch (e) {
+    prevFlows = [];
+    currentFlows = [];
+  }
+}
+
+function sanitizeSavedFlow(flow) {
+  var colorIndex = colors.indexOf(flow.color);
+
+  if (
+    colorIndex < 0 ||
+    colorIndex >= board.nodes.length ||
+    !Array.isArray(flow.points) ||
+    flow.points.length === 0
+  ) {
+    return false;
+  }
+
+  var points = [];
+
+  for (var i = 0; i < flow.points.length; i++) {
+    var point = flow.points[i];
+
+    if (!isValidSavedPoint(point)) return false;
+
+    var nextPoint = { x: point.x, y: point.y };
+
+    if (
+      points.length > 0 &&
+      !isAdjacent(points[points.length - 1], nextPoint)
+    ) {
+      return false;
+    }
+
+    points.push(nextPoint);
+  }
+
+  return { color: flow.color, points: points };
+}
+
+function isValidSavedPoint(point) {
+  return (
+    point &&
+    Number.isInteger(point.x) &&
+    Number.isInteger(point.y) &&
+    point.x >= 0 &&
+    point.x < board.size &&
+    point.y >= 0 &&
+    point.y < board.size
+  );
+}
+
 function cloneLevel(level) {
   return {
     size: level.size,
@@ -324,7 +427,7 @@ function selectGroup(groupId) {
   groupSelect.value = currentGroup().id;
   levelSelect.value = currentLevel().id;
   board = cloneLevel(currentLevel());
-  resetGame();
+  openLevel();
 }
 
 function selectLevel(levelId) {
@@ -334,18 +437,26 @@ function selectLevel(levelId) {
   currentLevelIndex = nextLevelIndex === -1 ? 0 : nextLevelIndex;
 
   board = cloneLevel(currentLevel());
-  resetGame();
+  openLevel();
 }
 
-function resetGame() {
+function openLevel() {
   down = false;
   touchId = undefined;
   completed = false;
   prevFlows = [];
   currentFlows = [];
   proposedFlow = [];
-  updateControls();
+  loadSavedProgress();
   init();
+  completed = Math.round(proportionFilled * 100) === 100;
+  updateControls();
+  if (completed) drawCompletionMessage();
+}
+
+function resetGame() {
+  clearSavedProgress();
+  openLevel();
 }
 
 function nextLevel() {
@@ -360,7 +471,7 @@ function nextLevel() {
 
   levelSelect.value = currentLevel().id;
   board = cloneLevel(currentLevel());
-  resetGame();
+  openLevel();
 }
 
 function updateControls() {
@@ -827,6 +938,7 @@ function downEvent(event) {
 
   restoreFlows();
   updateBoard();
+  saveCurrentProgress();
 } // downEvent()
 
 function upEvent(event) {
@@ -844,6 +956,7 @@ function upEvent(event) {
 
     backupFlows();
     updateBoard();
+    saveCurrentProgress();
   } catch (e) {
     console.warn("updateBoard errored");
   }
@@ -950,6 +1063,10 @@ function downTouchEvent(event) {
       proposedFlow.push(coords);
     }
   } catch (e) {}
+
+  restoreFlows();
+  updateBoard();
+  saveCurrentProgress();
 } // downTouchEvent()
 
 function upTouchEvent(event) {
@@ -970,6 +1087,7 @@ function upTouchEvent(event) {
 
   try {
     updateBoard();
+    saveCurrentProgress();
   } catch (e) {
     console.warn("updateBoard errored");
   }
@@ -1014,7 +1132,7 @@ populateGroupSelect();
 groupSelect.value = currentGroup().id;
 populateLevelSelect();
 levelSelect.value = currentLevel().id;
-resetGame();
+openLevel();
 
 window.addEventListener("mousedown", downEvent);
 window.addEventListener("mousemove", moveEvent);
