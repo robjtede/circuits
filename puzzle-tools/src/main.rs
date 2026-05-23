@@ -1,4 +1,4 @@
-use clap::{error::ErrorKind, Parser};
+use clap::{error::ErrorKind, Parser, Subcommand};
 use std::collections::HashMap;
 use std::env;
 use std::fs;
@@ -67,7 +67,30 @@ enum ParsedCommand {
 
 #[derive(Parser)]
 #[command(
-    name = "just solve --",
+    name = "puzzle-tools",
+    about = "Solve and generate Flow-style endpoint puzzles.",
+    subcommand_required = true,
+    arg_required_else_help = true
+)]
+struct ToolsCli {
+    #[command(subcommand)]
+    command: ToolsCommand,
+}
+
+#[derive(Subcommand)]
+enum ToolsCommand {
+    #[command(about = "Solve a Flow-style endpoint puzzle.", after_help = GRID_FORMAT_HELP)]
+    Solve(SolveCli),
+    #[command(
+        about = "Generate a solvable Flow-style endpoint puzzle.",
+        after_help = GRID_FORMAT_HELP
+    )]
+    Generate(GenerateCli),
+}
+
+#[derive(Parser)]
+#[command(
+    name = "solve",
     about = "Solve a Flow-style endpoint puzzle.",
     after_help = GRID_FORMAT_HELP
 )]
@@ -99,7 +122,7 @@ struct SolveCli {
 
 #[derive(Parser)]
 #[command(
-    name = "just generate --",
+    name = "generate",
     about = "Generate a solvable Flow-style endpoint puzzle.",
     after_help = GRID_FORMAT_HELP
 )]
@@ -156,7 +179,8 @@ Grid format:
 
 Examples:
   just solve -- --grid 'A...A/B...B/C...C/D...D/E...E'
-  just generate -- 8 --pairs 8 --seed 42";
+  just generate -- 8 --pairs 8 --seed 42
+  cargo run --manifest-path puzzle-tools/Cargo.toml -- solve --grid 'A...A/B...B/C...C/D...D/E...E'";
 
 struct Stats {
     nodes: u64,
@@ -631,29 +655,10 @@ fn parse_args<I>(argv: I) -> ParsedCommand
 where
     I: IntoIterator<Item = String>,
 {
-    let mut argv: Vec<String> = argv.into_iter().filter(|arg| arg != "--").collect();
+    let argv = argv.into_iter().filter(|arg| arg != "--");
 
-    if matches!(argv.first(), Some(command) if command == "generate") {
-        argv.remove(0);
-        return parse_generate_args(argv);
-    }
-
-    parse_solve_args(argv)
-}
-
-fn parse_solve_args(argv: Vec<String>) -> ParsedCommand {
-    match SolveCli::try_parse_from(std::iter::once("just solve --".to_string()).chain(argv)) {
-        Ok(cli) => ParsedCommand::Command(Command::Solve(cli.into())),
-        Err(error) if error.kind() == ErrorKind::DisplayHelp => {
-            ParsedCommand::Help(error.to_string())
-        }
-        Err(error) => ParsedCommand::Error(error.to_string()),
-    }
-}
-
-fn parse_generate_args(argv: Vec<String>) -> ParsedCommand {
-    match GenerateCli::try_parse_from(std::iter::once("just generate --".to_string()).chain(argv)) {
-        Ok(cli) => ParsedCommand::Command(Command::Generate(cli.into())),
+    match ToolsCli::try_parse_from(std::iter::once("puzzle-tools".to_string()).chain(argv)) {
+        Ok(cli) => ParsedCommand::Command(cli.into()),
         Err(error) if error.kind() == ErrorKind::DisplayHelp => {
             ParsedCommand::Help(error.to_string())
         }
@@ -712,6 +717,21 @@ impl From<GenerateCli> for GenerateArgs {
             stats: cli.stats,
             verify: !cli.no_verify,
             timeout_ms: cli.timeout_ms,
+        }
+    }
+}
+
+impl From<ToolsCli> for Command {
+    fn from(cli: ToolsCli) -> Self {
+        cli.command.into()
+    }
+}
+
+impl From<ToolsCommand> for Command {
+    fn from(command: ToolsCommand) -> Self {
+        match command {
+            ToolsCommand::Solve(cli) => Command::Solve(cli.into()),
+            ToolsCommand::Generate(cli) => Command::Generate(cli.into()),
         }
     }
 }

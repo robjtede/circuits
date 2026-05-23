@@ -22,7 +22,7 @@ Create a production build:
 npm run build
 ```
 
-### Puzzle solver
+### Puzzle Tools
 
 Check whether a potential grid is solvable:
 
@@ -36,10 +36,10 @@ Generate a solvable grid:
 just generate -- 8 --pairs 8 --seed 42
 ```
 
-The solver is a dependency-free Rust Cargo project in `puzzle-solver/`.
+The solver/generator is a Rust Cargo project in `puzzle-tools/`.
 The `just solve` and `just generate` recipes run it with `cargo run --release`,
 so Cargo handles
-rebuilds and caches the optimized binary under `puzzle-solver/target/`.
+rebuilds and caches the optimized binary under `puzzle-tools/target/`.
 
 Grid rules:
 

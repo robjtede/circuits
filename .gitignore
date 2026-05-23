@@ -1,4 +1,4 @@
 node_modules/
 dist/
 .DS_Store
-puzzle-solver/target/
+puzzle-tools/target/
