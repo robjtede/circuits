@@ -44,7 +44,7 @@ impl Default for GenerateArgs {
             height: 0,
             pairs: None,
             seed: None,
-            attempts: 1_000,
+            attempts: 20_000,
             show_solution: false,
             stats: false,
             verify: true,

@@ -90,7 +90,7 @@ struct GenerateCli {
     seed: Option<u64>,
     #[arg(
         long,
-        default_value_t = 1_000,
+        default_value_t = 20_000,
         value_name = "N",
         value_parser = parse_positive_usize,
         help = "Candidate attempts before failing."

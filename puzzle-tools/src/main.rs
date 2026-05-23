@@ -118,8 +118,15 @@ fn run_generate(args: GenerateArgs) -> i32 {
             .collect::<Vec<_>>()
             .join(",");
         eprintln!(
-            "seed={} attempts={} template={} lengths={}",
-            generated.seed, generated.attempts, generated.template, lengths
+            "seed={} attempts={} template={} lengths={} rewardScore={} longestLine={} totalBends={} averageBends={:.2}",
+            generated.seed,
+            generated.attempts,
+            generated.template,
+            lengths,
+            generated.reward.score,
+            generated.reward.longest_line,
+            generated.reward.total_bends,
+            generated.reward.average_bends()
         );
 
         if let Some(stats) = generated.verification_stats {
@@ -141,6 +148,7 @@ fn main() {
 mod tests {
     use super::*;
     use crate::model::chebyshev_distance;
+    use crate::solver::count_puzzle_solutions;
 
     #[test]
     fn generated_puzzle_is_solver_verified() {
@@ -149,7 +157,7 @@ mod tests {
             height: 5,
             pairs: Some(5),
             seed: Some(5),
-            attempts: 100,
+            attempts: 10_000,
             show_solution: false,
             stats: false,
             verify: true,
@@ -159,8 +167,11 @@ mod tests {
         let generated = generate_puzzle(&args).expect("generated puzzle");
         let puzzle = parse_grid(&generated.puzzle_rows.join("\n")).expect("parse generated puzzle");
         let result = solve_puzzle(&puzzle, 30_000).expect("solve generated puzzle");
+        let solution_count =
+            count_puzzle_solutions(&puzzle, 2, 30_000).expect("count generated puzzle solutions");
 
         assert!(result.solved);
+        assert_eq!(solution_count.count, 1);
     }
 
     #[test]
@@ -170,7 +181,7 @@ mod tests {
             height: 6,
             pairs: Some(6),
             seed: Some(6),
-            attempts: 100,
+            attempts: 10_000,
             show_solution: false,
             stats: false,
             verify: false,
@@ -183,5 +194,105 @@ mod tests {
         for pair in puzzle.pairs {
             assert!(chebyshev_distance(puzzle.width, pair.start, pair.target) > 1);
         }
+    }
+
+    #[test]
+    fn default_square_generation_uses_balanced_path_tiling() {
+        let args = GenerateArgs {
+            width: 6,
+            height: 6,
+            pairs: None,
+            seed: Some(606),
+            attempts: 1_000,
+            show_solution: false,
+            stats: false,
+            verify: false,
+            timeout_ms: 30_000,
+        };
+
+        let generated = generate_puzzle(&args).expect("generated puzzle");
+
+        assert_eq!(generated.template, "path-tiling");
+        assert_eq!(generated.lengths, vec![6; 6]);
+        assert_eq!(generated.reward.path_count, 6);
+    }
+
+    #[test]
+    fn generated_solution_rejects_simple_artifacts() {
+        let args = GenerateArgs {
+            width: 10,
+            height: 10,
+            pairs: Some(14),
+            seed: Some(42),
+            attempts: 10_000,
+            show_solution: false,
+            stats: false,
+            verify: true,
+            timeout_ms: 30_000,
+        };
+
+        let generated = generate_puzzle(&args).expect("generated puzzle");
+
+        assert!(!has_same_label_block(&generated.solution_rows));
+        assert!(!is_band_heavy(&generated.solution_rows));
+        assert!(generated.reward.longest_line <= 9);
+        assert!(generated.reward.average_bends() >= 0.25);
+    }
+
+    fn has_same_label_block(rows: &[String]) -> bool {
+        let grid = rows
+            .iter()
+            .map(|row| row.chars().collect::<Vec<_>>())
+            .collect::<Vec<_>>();
+
+        for y in 0..grid.len() - 1 {
+            for x in 0..grid[y].len() - 1 {
+                let label = grid[y][x];
+
+                if label != '.'
+                    && grid[y][x + 1] == label
+                    && grid[y + 1][x] == label
+                    && grid[y + 1][x + 1] == label
+                {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    fn is_band_heavy(rows: &[String]) -> bool {
+        let grid = rows
+            .iter()
+            .map(|row| row.chars().collect::<Vec<_>>())
+            .collect::<Vec<_>>();
+        let height = grid.len();
+        let width = grid.first().map_or(0, Vec::len);
+        let row_threshold = (width * 4).div_ceil(5);
+        let column_threshold = (height * 4).div_ceil(5);
+        let row_stripes = grid
+            .iter()
+            .filter(|row| max_label_count(row.iter().copied()) >= row_threshold)
+            .count();
+        let column_stripes = (0..width)
+            .filter(|x| max_label_count((0..height).map(|y| grid[y][*x])) >= column_threshold)
+            .count();
+
+        row_stripes > height / 2 || column_stripes > width / 2
+    }
+
+    fn max_label_count(cells: impl Iterator<Item = char>) -> usize {
+        let mut counts = [0_usize; 128];
+
+        for cell in cells {
+            let index = cell as usize;
+
+            if index < counts.len() && cell != '.' {
+                counts[index] += 1;
+            }
+        }
+
+        counts.into_iter().max().unwrap_or(0)
     }
 }

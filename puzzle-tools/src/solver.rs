@@ -1,7 +1,8 @@
 use std::time::Instant;
 
 use crate::model::{
-    index_for, render_solution, Puzzle, PuzzleTimeoutError, SolveError, SolveResult, Stats,
+    index_for, render_solution, Puzzle, PuzzleTimeoutError, SolutionCountResult, SolveError,
+    SolveResult, Stats,
 };
 
 #[derive(Clone, Copy)]
@@ -96,18 +97,27 @@ impl<'a> Solver<'a> {
         })
     }
 
+    fn count_solutions(
+        mut self,
+        solution_limit: usize,
+    ) -> Result<SolutionCountResult, PuzzleTimeoutError> {
+        let empty_count = self.puzzle.size - self.puzzle.pairs.len() * 2;
+        let started_at = Instant::now();
+        let mut first_solution = None;
+        let count = self.search_count(empty_count, solution_limit, &mut first_solution)?;
+        self.stats.elapsed_ms = started_at.elapsed().as_millis();
+
+        Ok(SolutionCountResult {
+            count,
+            first_solution,
+            stats: self.stats,
+        })
+    }
+
     fn search(&mut self, current_empty_count: usize) -> Result<bool, PuzzleTimeoutError> {
         self.stats.nodes += 1;
 
-        if (self.stats.nodes & 1023) == 0 {
-            if let Some(deadline) = self.deadline {
-                if Instant::now() > deadline {
-                    return Err(PuzzleTimeoutError {
-                        timeout_ms: self.timeout_ms,
-                    });
-                }
-            }
-        }
+        self.check_timeout()?;
 
         if self.incomplete_count == 0 {
             return Ok(current_empty_count == 0);
@@ -153,6 +163,92 @@ impl<'a> Solver<'a> {
         }
 
         Ok(false)
+    }
+
+    fn search_count(
+        &mut self,
+        current_empty_count: usize,
+        solution_limit: usize,
+        first_solution: &mut Option<Vec<String>>,
+    ) -> Result<usize, PuzzleTimeoutError> {
+        self.stats.nodes += 1;
+
+        self.check_timeout()?;
+
+        if self.incomplete_count == 0 {
+            if current_empty_count == 0 {
+                if first_solution.is_none() {
+                    *first_solution = Some(render_solution(self.puzzle, &self.paths));
+                }
+
+                return Ok(1);
+            }
+
+            return Ok(0);
+        }
+
+        if !self.passes_pruning(current_empty_count) {
+            return Ok(0);
+        }
+
+        let Some(choice) = self.choose_color(current_empty_count) else {
+            return Ok(0);
+        };
+
+        let mut solution_count = 0;
+
+        for step in choice.moves {
+            let previous_head = self.heads[choice.color];
+            let mut next_empty_count = current_empty_count;
+
+            self.heads[choice.color] = step.pos;
+            self.paths[choice.color].push(step.pos);
+
+            if step.target {
+                self.complete[choice.color] = true;
+                self.incomplete_count -= 1;
+            } else {
+                self.board[step.pos] = choice.color as i16;
+                next_empty_count -= 1;
+            }
+
+            solution_count +=
+                self.search_count(next_empty_count, solution_limit, first_solution)?;
+
+            if step.target {
+                self.complete[choice.color] = false;
+                self.incomplete_count += 1;
+            } else {
+                self.board[step.pos] = -1;
+            }
+
+            self.paths[choice.color].pop();
+            self.heads[choice.color] = previous_head;
+
+            if solution_count >= solution_limit {
+                return Ok(solution_count);
+            }
+
+            self.stats.backtracks += 1;
+        }
+
+        Ok(solution_count)
+    }
+
+    fn check_timeout(&self) -> Result<(), PuzzleTimeoutError> {
+        if (self.stats.nodes & 1023) != 0 {
+            return Ok(());
+        }
+
+        if let Some(deadline) = self.deadline {
+            if Instant::now() > deadline {
+                return Err(PuzzleTimeoutError {
+                    timeout_ms: self.timeout_ms,
+                });
+            }
+        }
+
+        Ok(())
     }
 
     fn passes_pruning(&mut self, current_empty_count: usize) -> bool {
@@ -422,4 +518,15 @@ impl<'a> Solver<'a> {
 pub fn solve_puzzle(puzzle: &Puzzle, timeout_ms: u64) -> Result<SolveResult, SolveError> {
     let solver = Solver::new(puzzle, timeout_ms).map_err(SolveError::Invalid)?;
     solver.solve().map_err(SolveError::Timeout)
+}
+
+pub fn count_puzzle_solutions(
+    puzzle: &Puzzle,
+    solution_limit: usize,
+    timeout_ms: u64,
+) -> Result<SolutionCountResult, SolveError> {
+    let solver = Solver::new(puzzle, timeout_ms).map_err(SolveError::Invalid)?;
+    solver
+        .count_solutions(solution_limit)
+        .map_err(SolveError::Timeout)
 }

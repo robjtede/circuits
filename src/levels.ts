@@ -1,13 +1,74 @@
-import type {
-  Cell,
-  CellPair,
-  Level,
-  LevelBoard,
-  LevelGroup,
-  LevelRecipe,
-  NodePair,
-  PathMode,
-} from "./types";
+import type { Level, LevelBoard, LevelGroup, NodePair, Point } from "./types";
+import level_5_01 from "./levels/5x5/5-01.json";
+import level_5_02 from "./levels/5x5/5-02.json";
+import level_5_03 from "./levels/5x5/5-03.json";
+import level_5_04 from "./levels/5x5/5-04.json";
+import level_5_05 from "./levels/5x5/5-05.json";
+import level_5_06 from "./levels/5x5/5-06.json";
+import level_5_07 from "./levels/5x5/5-07.json";
+import level_5_08 from "./levels/5x5/5-08.json";
+import level_5_09 from "./levels/5x5/5-09.json";
+import level_5_10 from "./levels/5x5/5-10.json";
+import level_6_01 from "./levels/6x6/6-01.json";
+import level_6_02 from "./levels/6x6/6-02.json";
+import level_6_03 from "./levels/6x6/6-03.json";
+import level_6_04 from "./levels/6x6/6-04.json";
+import level_6_05 from "./levels/6x6/6-05.json";
+import level_6_06 from "./levels/6x6/6-06.json";
+import level_6_07 from "./levels/6x6/6-07.json";
+import level_6_08 from "./levels/6x6/6-08.json";
+import level_6_09 from "./levels/6x6/6-09.json";
+import level_6_10 from "./levels/6x6/6-10.json";
+import level_7_01 from "./levels/7x7/7-01.json";
+import level_7_02 from "./levels/7x7/7-02.json";
+import level_7_03 from "./levels/7x7/7-03.json";
+import level_7_04 from "./levels/7x7/7-04.json";
+import level_7_05 from "./levels/7x7/7-05.json";
+import level_7_06 from "./levels/7x7/7-06.json";
+import level_7_07 from "./levels/7x7/7-07.json";
+import level_7_08 from "./levels/7x7/7-08.json";
+import level_7_09 from "./levels/7x7/7-09.json";
+import level_7_10 from "./levels/7x7/7-10.json";
+import level_8_01 from "./levels/8x8/8-01.json";
+import level_8_02 from "./levels/8x8/8-02.json";
+import level_8_03 from "./levels/8x8/8-03.json";
+import level_8_04 from "./levels/8x8/8-04.json";
+import level_8_05 from "./levels/8x8/8-05.json";
+import level_8_06 from "./levels/8x8/8-06.json";
+import level_8_07 from "./levels/8x8/8-07.json";
+import level_8_08 from "./levels/8x8/8-08.json";
+import level_8_09 from "./levels/8x8/8-09.json";
+import level_8_10 from "./levels/8x8/8-10.json";
+import level_9_01 from "./levels/9x9/9-01.json";
+import level_9_02 from "./levels/9x9/9-02.json";
+import level_9_03 from "./levels/9x9/9-03.json";
+import level_9_04 from "./levels/9x9/9-04.json";
+import level_9_05 from "./levels/9x9/9-05.json";
+import level_9_06 from "./levels/9x9/9-06.json";
+import level_9_07 from "./levels/9x9/9-07.json";
+import level_9_08 from "./levels/9x9/9-08.json";
+import level_9_09 from "./levels/9x9/9-09.json";
+import level_9_10 from "./levels/9x9/9-10.json";
+import level_10_01 from "./levels/10x10/10-01.json";
+import level_10_02 from "./levels/10x10/10-02.json";
+import level_10_03 from "./levels/10x10/10-03.json";
+import level_10_04 from "./levels/10x10/10-04.json";
+import level_10_05 from "./levels/10x10/10-05.json";
+import level_10_06 from "./levels/10x10/10-06.json";
+import level_10_07 from "./levels/10x10/10-07.json";
+import level_10_08 from "./levels/10x10/10-08.json";
+import level_10_09 from "./levels/10x10/10-09.json";
+import level_10_10 from "./levels/10x10/10-10.json";
+import level_11_01 from "./levels/11x11/11-01.json";
+import level_11_02 from "./levels/11x11/11-02.json";
+import level_11_03 from "./levels/11x11/11-03.json";
+import level_11_04 from "./levels/11x11/11-04.json";
+import level_11_05 from "./levels/11x11/11-05.json";
+import level_11_06 from "./levels/11x11/11-06.json";
+import level_11_07 from "./levels/11x11/11-07.json";
+import level_11_08 from "./levels/11x11/11-08.json";
+import level_11_09 from "./levels/11x11/11-09.json";
+import level_11_10 from "./levels/11x11/11-10.json";
 
 export var colors: string[] = [
   "red",
@@ -22,341 +83,221 @@ export var colors: string[] = [
   "brown",
   "green",
   "rgb(50,255,20)",
+  "rgb(255,0,128)",
+  "rgb(0,170,255)",
+  "rgb(180,255,0)",
+  "rgb(255,160,0)",
+  "rgb(0,230,170)",
+  "rgb(190,130,255)",
+  "rgb(255,80,80)",
+  "rgb(120,210,255)",
+  "rgb(220,220,80)",
+  "rgb(255,120,220)",
 ];
 
-export var levelGroups: LevelGroup[] = [
-  levelGroup(5, [
-    recipe("rows", [5, 5, 5, 5, 5]),
-    recipe("columns", [5, 5, 5, 5, 5]),
-    recipe("comb", [8, 4, 4, 4, 5]),
-    recipe("comb-reversed", [5, 4, 4, 4, 8]),
-    recipe("comb-rotated", [8, 4, 4, 4, 5]),
-    recipe("comb-rotated-reversed", [5, 4, 4, 4, 8]),
-    recipe("comb", [8, 4, 4, 6, 3]),
-    recipe("comb-reversed", [3, 4, 4, 4, 10]),
-    recipe("rows", [6, 3, 5, 5, 6]),
-    recipe("columns", [6, 3, 5, 5, 6]),
-  ]),
-  levelGroup(6, [
-    recipe("comb", [10, 5, 5, 5, 5, 6]),
-    recipe("comb-reversed", [6, 5, 5, 5, 5, 10]),
-    recipe("comb-rotated", [10, 5, 5, 5, 5, 6]),
-    recipe("comb-rotated-reversed", [6, 5, 5, 5, 5, 10]),
-    recipe("comb", [10, 5, 5, 7, 3, 6]),
-    recipe("comb-reversed", [6, 3, 5, 5, 7, 10]),
-    recipe("comb-rotated", [10, 5, 5, 7, 3, 6]),
-    recipe("comb-rotated-reversed", [6, 3, 5, 5, 7, 10]),
-    recipe("rows", [7, 4, 6, 6, 6, 7]),
-    recipe("columns", [7, 4, 6, 6, 6, 7]),
-  ]),
-  levelGroup(7, [
-    recipe("comb", [12, 6, 6, 6, 6, 6, 7]),
-    recipe("comb-reversed", [7, 6, 6, 6, 6, 6, 12]),
-    recipe("comb-rotated", [12, 6, 6, 6, 6, 6, 7]),
-    recipe("comb-rotated-reversed", [7, 6, 6, 6, 6, 6, 12]),
-    recipe("comb", [12, 6, 6, 6, 8, 4, 7]),
-    recipe("comb-reversed", [7, 4, 6, 6, 6, 8, 12]),
-    recipe("comb-rotated", [12, 6, 6, 6, 8, 4, 7]),
-    recipe("comb-rotated-reversed", [7, 4, 6, 6, 6, 8, 12]),
-    recipe("rows", [8, 5, 7, 7, 7, 7, 8]),
-    recipe("columns", [8, 5, 7, 7, 7, 7, 8]),
-  ]),
-  levelGroup(8, [
-    recipe("rows", [9, 6, 8, 8, 8, 8, 8, 9]),
-    recipe("columns", [9, 6, 8, 8, 8, 8, 8, 9]),
-    recipe("rows-rotated", [9, 6, 8, 8, 8, 8, 8, 9]),
-    recipe("columns-rotated", [9, 6, 8, 8, 8, 8, 8, 9]),
-    recipe("rows-reversed", [9, 6, 8, 8, 8, 8, 8, 9]),
-    recipe("columns-reversed", [9, 6, 8, 8, 8, 8, 8, 9]),
-    recipe("rows", [9, 8, 6, 8, 8, 8, 8, 9]),
-    recipe("columns", [9, 8, 6, 8, 8, 8, 8, 9]),
-    recipe("rows-rotated", [9, 8, 6, 8, 8, 8, 8, 9]),
-    recipe("columns-rotated", [9, 8, 6, 8, 8, 8, 8, 9]),
-  ]),
-  levelGroup(9, [
-    recipe("rows", [10, 7, 9, 9, 9, 9, 9, 9, 10]),
-    recipe("columns", [10, 7, 9, 9, 9, 9, 9, 9, 10]),
-    recipe("rows-rotated", [10, 7, 9, 9, 9, 9, 9, 9, 10]),
-    recipe("columns-rotated", [10, 7, 9, 9, 9, 9, 9, 9, 10]),
-    recipe("rows-reversed", [10, 7, 9, 9, 9, 9, 9, 9, 10]),
-    recipe("columns-reversed", [10, 7, 9, 9, 9, 9, 9, 9, 10]),
-    recipe("rows", [10, 9, 7, 9, 9, 9, 9, 9, 10]),
-    recipe("columns", [10, 9, 7, 9, 9, 9, 9, 9, 10]),
-    recipe("rows-rotated", [10, 9, 7, 9, 9, 9, 9, 9, 10]),
-    recipe("columns-rotated", [10, 9, 7, 9, 9, 9, 9, 9, 10]),
-  ]),
-  levelGroup(10, [
-    recipe("rows", [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]),
-    recipe("columns", [10, 10, 10, 10, 10, 10, 10, 10, 10, 10]),
-    recipe("rows", [11, 8, 10, 10, 10, 10, 10, 10, 10, 11]),
-    recipe("columns", [11, 8, 10, 10, 10, 10, 10, 10, 10, 11]),
-    recipe("rows-rotated", [11, 8, 10, 10, 10, 10, 10, 10, 10, 11]),
-    recipe("columns-rotated", [11, 8, 10, 10, 10, 10, 10, 10, 10, 11]),
-    recipe("rows-reversed", [11, 8, 10, 10, 10, 10, 10, 10, 10, 11]),
-    recipe("columns-reversed", [11, 8, 10, 10, 10, 10, 10, 10, 10, 11]),
-    recipe("rows", [11, 10, 8, 10, 10, 10, 10, 10, 10, 11]),
-    recipe("columns", [11, 10, 8, 10, 10, 10, 10, 10, 10, 11]),
-  ]),
-];
+export var levelGroups: LevelGroup[] = groupLevels([
+  level_5_01,
+  level_5_02,
+  level_5_03,
+  level_5_04,
+  level_5_05,
+  level_5_06,
+  level_5_07,
+  level_5_08,
+  level_5_09,
+  level_5_10,
+  level_6_01,
+  level_6_02,
+  level_6_03,
+  level_6_04,
+  level_6_05,
+  level_6_06,
+  level_6_07,
+  level_6_08,
+  level_6_09,
+  level_6_10,
+  level_7_01,
+  level_7_02,
+  level_7_03,
+  level_7_04,
+  level_7_05,
+  level_7_06,
+  level_7_07,
+  level_7_08,
+  level_7_09,
+  level_7_10,
+  level_8_01,
+  level_8_02,
+  level_8_03,
+  level_8_04,
+  level_8_05,
+  level_8_06,
+  level_8_07,
+  level_8_08,
+  level_8_09,
+  level_8_10,
+  level_9_01,
+  level_9_02,
+  level_9_03,
+  level_9_04,
+  level_9_05,
+  level_9_06,
+  level_9_07,
+  level_9_08,
+  level_9_09,
+  level_9_10,
+  level_10_01,
+  level_10_02,
+  level_10_03,
+  level_10_04,
+  level_10_05,
+  level_10_06,
+  level_10_07,
+  level_10_08,
+  level_10_09,
+  level_10_10,
+  level_11_01,
+  level_11_02,
+  level_11_03,
+  level_11_04,
+  level_11_05,
+  level_11_06,
+  level_11_07,
+  level_11_08,
+  level_11_09,
+  level_11_10,
+]);
 
-function recipe(mode: PathMode, lengths: number[]): LevelRecipe {
-  return { mode: mode, lengths: lengths };
-}
+function groupLevels(rawLevels: unknown[]): LevelGroup[] {
+  var groups: LevelGroup[] = [];
+  var groupBySize = new Map<number, Level[]>();
 
-function levelGroup(size: number, recipes: LevelRecipe[]): LevelGroup {
-  if (recipes.length !== 10) {
-    throw new Error(size + "x" + size + " must contain exactly 10 levels");
-  }
+  rawLevels.forEach(function (rawLevel) {
+    var nextLevel = normalizeLevel(rawLevel);
+    var levels = groupBySize.get(nextLevel.size);
 
-  return {
-    id: String(size),
-    name: size + "x" + size,
-    levels: recipes.map(function (levelRecipe, index) {
-      return levelFromRecipe(size, index, levelRecipe);
-    }),
-  };
-}
+    if (!levels) {
+      levels = [];
+      groupBySize.set(nextLevel.size, levels);
+    }
 
-function levelFromRecipe(
-  size: number,
-  index: number,
-  levelRecipe: LevelRecipe,
-): Level {
-  var totalLength = levelRecipe.lengths.reduce(function (sum, length) {
-    return sum + length;
-  }, 0);
-
-  if (levelRecipe.lengths.length !== size || totalLength !== size * size) {
-    throw new Error(
-      size + "x" + size + " level " + (index + 1) + " is invalid",
-    );
-  }
-
-  var path = switchbackPath(size, levelRecipe.mode);
-  validateSolutionPath(size, path, levelRecipe.mode);
-
-  var pathIndex = 0;
-  var number = padLevelNumber(index + 1);
-  var pairs = levelRecipe.lengths.map(function (length, pairIndex) {
-    var segment = path.slice(pathIndex, pathIndex + length);
-    pathIndex += length;
-
-    validateSolutionSegment(
-      size,
-      segment,
-      size + "x" + size + " level " + number + " pair " + (pairIndex + 1),
-    );
-
-    return [segment[0], segment[segment.length - 1]] as CellPair;
+    levels.push(nextLevel);
   });
 
-  return level(size + "-" + number, "Level " + number, size, pairs);
-}
+  Array.from(groupBySize.keys())
+    .sort(function (a, b) {
+      return a - b;
+    })
+    .forEach(function (size) {
+      var levels = groupBySize.get(size) || [];
 
-function padLevelNumber(number: number): string {
-  return String(number).padStart(2, "0");
-}
-
-function switchbackPath(size: number, mode: PathMode): Cell[] {
-  var path: Cell[];
-
-  if (mode.indexOf("columns") === 0) {
-    path = columnSwitchback(size);
-  } else if (mode.indexOf("spiral") === 0) {
-    path = spiralPath(size);
-  } else if (mode.indexOf("comb") === 0) {
-    path = combPath(size);
-  } else {
-    path = rowSwitchback(size);
-  }
-
-  if (mode.indexOf("rotated") !== -1) {
-    path = path.map(function (point) {
-      return [size - 1 - point[1], point[0]];
-    });
-  }
-
-  if (mode.indexOf("reversed") !== -1) {
-    path = path.slice().reverse();
-  }
-
-  return path;
-}
-
-function validateSolutionPath(
-  size: number,
-  path: Cell[],
-  mode: PathMode,
-): void {
-  var seen: Record<string, boolean> = {};
-
-  if (path.length !== size * size) {
-    throw new Error(mode + " path does not fill a " + size + "x" + size);
-  }
-
-  path.forEach(function (point, index) {
-    var key = point[0] + "," + point[1];
-
-    if (point[0] < 0 || point[0] >= size || point[1] < 0 || point[1] >= size) {
-      throw new Error(mode + " path contains a cell outside the board");
-    }
-
-    if (seen[key]) {
-      throw new Error(mode + " path visits " + key + " more than once");
-    }
-
-    if (index > 0) {
-      var previous = path[index - 1];
-      var distance =
-        Math.abs(previous[0] - point[0]) + Math.abs(previous[1] - point[1]);
-
-      if (distance !== 1) {
-        throw new Error(mode + " path contains a non-adjacent step");
-      }
-    }
-
-    seen[key] = true;
-  });
-}
-
-function validateSolutionSegment(
-  size: number,
-  segment: Cell[],
-  label: string,
-): void {
-  var cells: Record<string, boolean> = {};
-
-  segment.forEach(function (point) {
-    cells[point[0] + "," + point[1]] = true;
-  });
-
-  for (var y = 0; y < size - 1; y++) {
-    for (var x = 0; x < size - 1; x++) {
-      if (
-        cells[x + "," + y] &&
-        cells[x + 1 + "," + y] &&
-        cells[x + "," + (y + 1)] &&
-        cells[x + 1 + "," + (y + 1)]
-      ) {
-        throw new Error(label + " fills a 2x2 block");
-      }
-    }
-  }
-}
-
-function rowSwitchback(size: number): Cell[] {
-  var path: Cell[] = [];
-
-  for (var y = 0; y < size; y++) {
-    if (y % 2 === 0) {
-      for (var x = 0; x < size; x++) path.push([x, y]);
-    } else {
-      for (var xr = size - 1; xr >= 0; xr--) path.push([xr, y]);
-    }
-  }
-
-  return path;
-}
-
-function columnSwitchback(size: number): Cell[] {
-  var path: Cell[] = [];
-
-  for (var x = 0; x < size; x++) {
-    if (x % 2 === 0) {
-      for (var y = 0; y < size; y++) path.push([x, y]);
-    } else {
-      for (var yr = size - 1; yr >= 0; yr--) path.push([x, yr]);
-    }
-  }
-
-  return path;
-}
-
-function spiralPath(size: number): Cell[] {
-  var path: Cell[] = [];
-  var left = 0;
-  var right = size - 1;
-  var top = 0;
-  var bottom = size - 1;
-
-  while (left <= right && top <= bottom) {
-    for (var x = left; x <= right; x++) path.push([x, top]);
-    top++;
-
-    for (var y = top; y <= bottom; y++) path.push([right, y]);
-    right--;
-
-    if (top <= bottom) {
-      for (var xr = right; xr >= left; xr--) path.push([xr, bottom]);
-      bottom--;
-    }
-
-    if (left <= right) {
-      for (var yr = bottom; yr >= top; yr--) path.push([left, yr]);
-      left++;
-    }
-  }
-
-  return path;
-}
-
-function combPath(size: number): Cell[] {
-  var path: Cell[] = [];
-  var bottom = size - 1;
-  var currentY = 0;
-
-  for (var x = 0; x < size; x++) path.push([x, 0]);
-
-  for (var column = size - 1; column >= 0; column--) {
-    if (currentY === 0 || currentY === 1) {
-      for (var y = currentY + 1; y <= bottom; y++) path.push([column, y]);
-      currentY = bottom;
-    } else {
-      for (var yr = bottom - 1; yr >= 1; yr--) path.push([column, yr]);
-      currentY = 1;
-    }
-
-    if (column > 0) path.push([column - 1, currentY]);
-  }
-
-  return path;
-}
-
-function level(
-  id: string,
-  name: string,
-  size: number,
-  pairs: CellPair[],
-): Level {
-  if (pairs.length > colors.length) {
-    throw new Error(name + " uses more pairs than there are colors");
-  }
-
-  return {
-    id: id,
-    name: name,
-    size: size,
-    nodes: pairs.map(function (pair) {
-      var distance = Math.max(
-        Math.abs(pair[0][0] - pair[1][0]),
-        Math.abs(pair[0][1] - pair[1][1]),
-      );
-
-      if (distance <= 1) {
-        throw new Error(name + " contains adjacent endpoints");
+      if (levels.length !== 10) {
+        throw new Error(size + "x" + size + " must contain exactly 10 levels");
       }
 
-      var nodes = pair.map(function (node) {
-        if (node[0] < 0 || node[0] >= size || node[1] < 0 || node[1] >= size) {
-          throw new Error(name + " contains an endpoint outside the board");
-        }
-
-        return { x: node[0], y: node[1] };
+      groups.push({
+        id: String(size),
+        name: size + "x" + size,
+        levels: levels.sort(compareLevels),
       });
+    });
 
-      return nodes as NodePair;
+  return groups;
+}
+
+function compareLevels(a: Level, b: Level): number {
+  return a.id.localeCompare(b.id);
+}
+
+function normalizeLevel(rawLevel: unknown): Level {
+  if (!isRecord(rawLevel)) {
+    throw new Error("Level data must be an object");
+  }
+
+  var id = rawLevel.id;
+  var name = rawLevel.name;
+  var size = rawLevel.size;
+  var nodes = rawLevel.nodes;
+
+  if (typeof id !== "string" || typeof name !== "string") {
+    throw new Error("Level data requires string id and name");
+  }
+
+  if (typeof size !== "number" || !Number.isInteger(size) || size < 2) {
+    throw new Error(id + " requires a valid board size");
+  }
+
+  if (!Array.isArray(nodes) || nodes.length > colors.length) {
+    throw new Error(id + " requires a valid node pair list");
+  }
+
+  var levelId = id;
+  var levelName = name;
+  var boardSize = size;
+
+  return {
+    id: levelId,
+    name: levelName,
+    size: boardSize,
+    nodes: nodes.map(function (pair, pairIndex) {
+      return normalizeNodePair(boardSize, levelId, pair, pairIndex);
     }),
   };
+}
+
+function normalizeNodePair(
+  size: number,
+  levelId: string,
+  pair: unknown,
+  pairIndex: number,
+): NodePair {
+  if (!Array.isArray(pair) || pair.length !== 2) {
+    throw new Error(
+      levelId + " pair " + (pairIndex + 1) + " must contain two nodes",
+    );
+  }
+
+  var nodes = pair.map(function (node) {
+    return normalizePoint(size, levelId, node);
+  }) as NodePair;
+  var distance = Math.max(
+    Math.abs(nodes[0].x - nodes[1].x),
+    Math.abs(nodes[0].y - nodes[1].y),
+  );
+
+  if (distance <= 1) {
+    throw new Error(levelId + " contains adjacent endpoints");
+  }
+
+  return nodes;
+}
+
+function normalizePoint(size: number, levelId: string, node: unknown): Point {
+  if (!isRecord(node)) {
+    throw new Error(levelId + " contains an invalid endpoint");
+  }
+
+  var x = node.x;
+  var y = node.y;
+
+  if (
+    typeof x !== "number" ||
+    typeof y !== "number" ||
+    !Number.isInteger(x) ||
+    !Number.isInteger(y) ||
+    x < 0 ||
+    x >= size ||
+    y < 0 ||
+    y >= size
+  ) {
+    throw new Error(levelId + " contains an endpoint outside the board");
+  }
+
+  return { x: x, y: y };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }
 
 export function cloneLevel(level: Level): LevelBoard {

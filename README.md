@@ -58,9 +58,15 @@ just solve -- --quiet < puzzles/candidate.txt
 Exit code `0` means solvable, `1` means unsolvable, and `2` means invalid input or
 the search timed out. Use `--timeout-ms 0` to disable the default 30 second timeout.
 
-Generated puzzles are built from complete solution paths, enforce non-adjacent
-endpoints, and are solver-verified by default. Use `--solution` to print the
-generated full solution, or `--no-verify` to skip the solver check.
+Generated puzzles default to roughly one endpoint pair per board row/column.
+Square boards at that density are built from balanced path tilings; other counts
+fall back to slicing complete solution paths. Generated candidates enforce
+non-adjacent endpoints, reject 2x2 same-color solution blocks, reject band-heavy
+solutions, reward shorter straight-line runs and more bends per path, and are
+verified to have exactly one solution by default. Use `--solution` to print the
+generated full solution, or `--no-verify` to skip the solver check. Use `--stats`
+to print the selected candidate's reward score, longest straight run, total
+bends, and average bends per path.
 
 Build the container image:
 

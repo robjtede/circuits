@@ -27,6 +27,12 @@ pub struct SolveResult {
     pub stats: Stats,
 }
 
+pub struct SolutionCountResult {
+    pub count: usize,
+    pub first_solution: Option<Vec<String>>,
+    pub stats: Stats,
+}
+
 #[derive(Debug)]
 pub struct PuzzleTimeoutError {
     pub timeout_ms: u64,
