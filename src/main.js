@@ -40,10 +40,10 @@ var w,
   cellSize,
   down,
   touchId,
-  proposedFlowColor,
-  proposedFlowEnd,
+  proposedCircuitColor,
+  proposedCircuitEnd,
   availableCells,
-  flowsComplete,
+  circuitsComplete,
   cellProportion,
   proportionFilled,
   currentGroupIndex,
@@ -144,10 +144,10 @@ currentGroupIndex = 0;
 currentLevelIndex = 0;
 var board = cloneLevel(currentLevel());
 
-var prevFlows = []; // last state of flows - background drawing
-var currentFlows = []; // dynamic current state of slows - foreground drawing
-var proposedFlow = []; // flow being drawn
-var storagePrefix = "flow.progress.";
+var prevCircuits = []; // last state of circuits - background drawing
+var currentCircuits = []; // dynamic current state of circuits - foreground drawing
+var proposedCircuit = []; // circuit being drawn
+var storagePrefix = "circuits.progress.";
 
 function recipe(mode, lengths) {
   return { mode: mode, lengths: lengths };
@@ -284,11 +284,11 @@ function storageKey() {
   return storagePrefix + currentGroup().id + "." + currentLevel().id;
 }
 
-function cloneFlows(flows) {
-  return flows.map(function (flow) {
+function cloneCircuits(circuits) {
+  return circuits.map(function (circuit) {
     return {
-      color: flow.color,
-      points: flow.points.map(function (point) {
+      color: circuit.color,
+      points: circuit.points.map(function (point) {
         return { x: point.x, y: point.y };
       }),
     };
@@ -297,7 +297,7 @@ function cloneFlows(flows) {
 
 function saveCurrentProgress() {
   try {
-    if (prevFlows.length === 0) {
+    if (prevCircuits.length === 0) {
       localStorage.removeItem(storageKey());
       return;
     }
@@ -306,7 +306,7 @@ function saveCurrentProgress() {
       storageKey(),
       JSON.stringify({
         version: 1,
-        flows: cloneFlows(prevFlows),
+        circuits: cloneCircuits(prevCircuits),
       }),
     );
   } catch (e) {}
@@ -322,36 +322,36 @@ function loadSavedProgress() {
   try {
     var saved = JSON.parse(localStorage.getItem(storageKey()));
 
-    if (!saved || !Array.isArray(saved.flows)) return;
+    if (!saved || !Array.isArray(saved.circuits)) return;
 
-    prevFlows = saved.flows
-      .map(function (flow) {
-        return sanitizeSavedFlow(flow);
+    prevCircuits = saved.circuits
+      .map(function (circuit) {
+        return sanitizeSavedCircuit(circuit);
       })
       .filter(Boolean);
-    currentFlows = cloneFlows(prevFlows);
+    currentCircuits = cloneCircuits(prevCircuits);
   } catch (e) {
-    prevFlows = [];
-    currentFlows = [];
+    prevCircuits = [];
+    currentCircuits = [];
   }
 }
 
-function sanitizeSavedFlow(flow) {
-  var colorIndex = colors.indexOf(flow.color);
+function sanitizeSavedCircuit(circuit) {
+  var colorIndex = colors.indexOf(circuit.color);
 
   if (
     colorIndex < 0 ||
     colorIndex >= board.nodes.length ||
-    !Array.isArray(flow.points) ||
-    flow.points.length === 0
+    !Array.isArray(circuit.points) ||
+    circuit.points.length === 0
   ) {
     return false;
   }
 
   var points = [];
 
-  for (var i = 0; i < flow.points.length; i++) {
-    var point = flow.points[i];
+  for (var i = 0; i < circuit.points.length; i++) {
+    var point = circuit.points[i];
 
     if (!isValidSavedPoint(point)) return false;
 
@@ -367,7 +367,7 @@ function sanitizeSavedFlow(flow) {
     points.push(nextPoint);
   }
 
-  return { color: flow.color, points: points };
+  return { color: circuit.color, points: points };
 }
 
 function isValidSavedPoint(point) {
@@ -444,9 +444,9 @@ function openLevel() {
   down = false;
   touchId = undefined;
   completed = false;
-  prevFlows = [];
-  currentFlows = [];
-  proposedFlow = [];
+  prevCircuits = [];
+  currentCircuits = [];
+  proposedCircuit = [];
   loadSavedProgress();
   init();
   completed = Math.round(proportionFilled * 100) === 100;
@@ -634,22 +634,22 @@ function nodeColor(x, y) {
   return found;
 } // nodeColor()
 
-function drawProposedFlow() {
+function drawProposedCircuit() {
   try {
-    if (proposedFlow.length === 0) throw new Error("proposed flow empty");
+    if (proposedCircuit.length === 0) throw new Error("proposed circuit empty");
 
     ctx.save();
-    ctx.strokeStyle = proposedFlowColor;
+    ctx.strokeStyle = proposedCircuitColor;
     ctx.lineWidth = cellSize * 0.3;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
 
-    var pos = centerPos(proposedFlow[0].x, proposedFlow[0].y);
+    var pos = centerPos(proposedCircuit[0].x, proposedCircuit[0].y);
 
     ctx.beginPath();
     ctx.moveTo(pos.x, pos.y);
 
-    proposedFlow.forEach(function (val, index) {
+    proposedCircuit.forEach(function (val, index) {
       var center = centerPos(val.x, val.y);
 
       ctx.lineTo(center.x, center.y);
@@ -658,26 +658,26 @@ function drawProposedFlow() {
     ctx.stroke();
     ctx.restore();
   } catch (e) {}
-} // drawProposedFlow()
+} // drawProposedCircuit()
 
-function drawFlows() {
+function drawCircuits() {
   try {
-    if (currentFlows.length === 0) throw new Error("flows empty");
+    if (currentCircuits.length === 0) throw new Error("circuits empty");
 
     ctx.save();
     ctx.lineWidth = cellSize * 0.3;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
 
-    currentFlows.forEach(function (flow, flowIndex) {
-      var move = centerPos(flow.points[0].x, flow.points[0].y);
+    currentCircuits.forEach(function (circuit, circuitIndex) {
+      var move = centerPos(circuit.points[0].x, circuit.points[0].y);
 
-      ctx.strokeStyle = flow.color;
+      ctx.strokeStyle = circuit.color;
 
       ctx.beginPath();
       ctx.moveTo(move.x, move.y);
 
-      flow.points.forEach(function (point, pointIndex) {
+      circuit.points.forEach(function (point, pointIndex) {
         var center = centerPos(point.x, point.y);
 
         ctx.lineTo(center.x, center.y);
@@ -688,10 +688,10 @@ function drawFlows() {
 
     ctx.restore();
 
-    prevFlows.forEach(function (flow, flowIndex) {
-      ctx.fillStyle = flow.color;
+    prevCircuits.forEach(function (circuit, circuitIndex) {
+      ctx.fillStyle = circuit.color;
 
-      flow.points.forEach(function (point, pointIndex) {
+      circuit.points.forEach(function (point, pointIndex) {
         var topleft = topLeftPos(point.x, point.y);
 
         ctx.save();
@@ -701,7 +701,7 @@ function drawFlows() {
       });
     });
   } catch (e) {}
-} // drawFlows()
+} // drawCircuits()
 
 function drawCompletionMessage() {
   ctx.save();
@@ -716,74 +716,77 @@ function drawCompletionMessage() {
 function isMatchingNode(x, y) {
   if (!isNode(x, y)) return false; // error - not a node
 
-  var firstNode = compareCoords({ x: x, y: y }, proposedFlow[0]);
+  var firstNode = compareCoords({ x: x, y: y }, proposedCircuit[0]);
 
   if (firstNode) return false;
-  if (nodeColor(x, y) == proposedFlowColor) return true;
+  if (nodeColor(x, y) == proposedCircuitColor) return true;
 
   return false;
 } // isMatchingNode()
 
-function isInProposedFlow(x, y) {
+function isInProposedCircuit(x, y) {
   var found = false;
 
-  proposedFlow.forEach(function (val, index) {
+  proposedCircuit.forEach(function (val, index) {
     var compare = compareCoords(val, { x: x, y: y });
 
     if (compare) found = true;
   });
 
   return found;
-} // posInProposedFlow()
+} // posInProposedCircuit()
 
-function posInFlows(x, y) {
+function posInCircuits(x, y) {
   var found = false;
 
-  currentFlows.forEach(function (flow, flowIndex) {
-    flow.points.forEach(function (point, posIndex) {
+  currentCircuits.forEach(function (circuit, circuitIndex) {
+    circuit.points.forEach(function (point, posIndex) {
       var compare = compareCoords(point, { x: x, y: y });
-      if (compare) found = { flow: flowIndex, pos: posIndex };
+      if (compare) found = { circuit: circuitIndex, pos: posIndex };
     });
   });
 
   return found;
-} // posInFlows()
+} // posInCircuits()
 
-function colorInFlows(color) {
+function colorInCircuits(color) {
   var found = false;
 
-  currentFlows.forEach(function (flow, flowIndex) {
-    var compare = color === flow.color;
-    if (compare) found = flowIndex;
+  currentCircuits.forEach(function (circuit, circuitIndex) {
+    var compare = color === circuit.color;
+    if (compare) found = circuitIndex;
   });
 
   return found;
-} // colorInFlows()
+} // colorInCircuits()
 
-function posInProposedFlow(x, y) {
-  // if (proposedFlow.length == 2) return false;
+function posInProposedCircuit(x, y) {
+  // if (proposedCircuit.length == 2) return false;
   var found = false;
 
-  proposedFlow.forEach(function (val, index) {
+  proposedCircuit.forEach(function (val, index) {
     var compare = compareCoords(val, { x: x, y: y });
 
     if (compare) found = index;
   });
 
   return found;
-} // isInProposedFlow()
+} // isInProposedCircuit()
 
-function anyProposedInCurrentFlows() {
+function anyProposedInCurrentCircuits() {
   var slices = [];
 
-  for (var i = 0; i < proposedFlow.length; i++) {
-    for (var j = 0; j < currentFlows.length; j++) {
+  for (var i = 0; i < proposedCircuit.length; i++) {
+    for (var j = 0; j < currentCircuits.length; j++) {
       var compare = false;
-      for (var k = 0; k < currentFlows[j].points.length; k++) {
-        compare = compareCoords(proposedFlow[i], currentFlows[j].points[k]);
+      for (var k = 0; k < currentCircuits[j].points.length; k++) {
+        compare = compareCoords(
+          proposedCircuit[i],
+          currentCircuits[j].points[k],
+        );
 
         if (compare) {
-          slices.push({ flow: j, pos: k });
+          slices.push({ circuit: j, pos: k });
           break;
         }
       } // for k
@@ -796,56 +799,56 @@ function anyProposedInCurrentFlows() {
 
   if (slices.length === 0) return false;
   return slices;
-} // anyProposedInCurrentFlows()
+} // anyProposedInCurrentCircuits()
 
-function backupFlows() {
-  prevFlows = [];
-  var newFlows = [];
+function backupCircuits() {
+  prevCircuits = [];
+  var newCircuits = [];
 
-  currentFlows.forEach(function (flow, flowIndex) {
-    newFlows.push({ color: flow.color, points: [] });
-    flow.points.forEach(function (point, pointIndex) {
-      newFlows.last().points[pointIndex] = point;
+  currentCircuits.forEach(function (circuit, circuitIndex) {
+    newCircuits.push({ color: circuit.color, points: [] });
+    circuit.points.forEach(function (point, pointIndex) {
+      newCircuits.last().points[pointIndex] = point;
     });
   });
 
-  prevFlows = newFlows;
+  prevCircuits = newCircuits;
 
-  proposedFlowColor = undefined;
-  proposedFlowEnd = undefined;
-  proposedFlow = [];
-} // backupFlows()
+  proposedCircuitColor = undefined;
+  proposedCircuitEnd = undefined;
+  proposedCircuit = [];
+} // backupCircuits()
 
-function restoreFlows() {
-  currentFlows = [];
-  var newFlows = [];
+function restoreCircuits() {
+  currentCircuits = [];
+  var newCircuits = [];
 
-  for (var i = 0, j = prevFlows.length; i < j; i++) {
-    if (prevFlows[i].color === proposedFlowColor) {
-      prevFlows.splice(i, 1);
+  for (var i = 0, j = prevCircuits.length; i < j; i++) {
+    if (prevCircuits[i].color === proposedCircuitColor) {
+      prevCircuits.splice(i, 1);
       j--;
     }
   }
 
-  for (var i = 0, j = prevFlows.length; i < j; i++) {
-    newFlows.push({ color: prevFlows[i].color, points: [] });
+  for (var i = 0, j = prevCircuits.length; i < j; i++) {
+    newCircuits.push({ color: prevCircuits[i].color, points: [] });
 
-    prevFlows[i].points.forEach(function (point, pointIndex) {
-      newFlows.last().points[pointIndex] = point;
+    prevCircuits[i].points.forEach(function (point, pointIndex) {
+      newCircuits.last().points[pointIndex] = point;
     });
   }
 
-  currentFlows = newFlows;
-} // restoreFlows()
+  currentCircuits = newCircuits;
+} // restoreCircuits()
 
 function calculateProportionFilled() {
   var total = 0;
 
-  prevFlows.forEach(function (val, index) {
+  prevCircuits.forEach(function (val, index) {
     total += val.points.length;
   });
 
-  total += proposedFlow.length;
+  total += proposedCircuit.length;
 
   total *= cellProportion;
 
@@ -859,38 +862,37 @@ function moveEvent(event) {
   try {
     var coords = posToCell(event.clientX, event.clientY);
 
-    var same = compareCoords(proposedFlow.last(), coords);
-    var adjacent = isAdjacent(proposedFlow.last(), coords);
+    var same = compareCoords(proposedCircuit.last(), coords);
+    var adjacent = isAdjacent(proposedCircuit.last(), coords);
     var node = nodeColor(coords.x, coords.y);
     var matchingNode = isMatchingNode(coords.x, coords.y);
-    var inProposedFlow = posInProposedFlow(coords.x, coords.y);
+    var inProposedCircuit = posInProposedCircuit(coords.x, coords.y);
 
     if (
       !same &&
       adjacent &&
-      (!node || matchingNode || node == proposedFlowColor) &&
-      (!proposedFlowEnd || !!inProposedFlow)
+      (!node || matchingNode || node == proposedCircuitColor) &&
+      (!proposedCircuitEnd || !!inProposedCircuit)
     ) {
-      if (inProposedFlow === false) {
-        proposedFlow.push(coords);
+      if (inProposedCircuit === false) {
+        proposedCircuit.push(coords);
       } else {
         // handle backtracking
-        proposedFlow = proposedFlow.slice(0, inProposedFlow + 1);
+        proposedCircuit = proposedCircuit.slice(0, inProposedCircuit + 1);
       }
 
-      restoreFlows();
+      restoreCircuits();
 
-      // limit extra flow from end node
-      proposedFlowEnd = matchingNode ? true : false;
+      // limit extra circuit from end node
+      proposedCircuitEnd = matchingNode ? true : false;
 
-      // find conflicting flows and slice
-      var posInfo = anyProposedInCurrentFlows();
+      // find conflicting circuits and slice
+      var posInfo = anyProposedInCurrentCircuits();
       if (posInfo !== false) {
         posInfo.forEach(function (val, index) {
-          currentFlows[val.flow].points = currentFlows[val.flow].points.slice(
-            0,
-            val.pos,
-          );
+          currentCircuits[val.circuit].points = currentCircuits[
+            val.circuit
+          ].points.slice(0, val.pos);
         });
       }
 
@@ -911,50 +913,50 @@ function downEvent(event) {
   try {
     var coords = posToCell(event.clientX, event.clientY);
     var node = nodeColor(coords.x, coords.y);
-    var flowExists = posInFlows(coords.x, coords.y);
-    if (flowExists !== false) {
+    var circuitExists = posInCircuits(coords.x, coords.y);
+    if (circuitExists !== false) {
       if (node == false) {
-        var flow = currentFlows.splice(flowExists.flow, 1)[0];
-        proposedFlow = flow.points.slice(0, flowExists.pos + 1);
-        proposedFlowColor = flow.color;
+        var circuit = currentCircuits.splice(circuitExists.circuit, 1)[0];
+        proposedCircuit = circuit.points.slice(0, circuitExists.pos + 1);
+        proposedCircuitColor = circuit.color;
       } else {
-        proposedFlowColor = node;
-        proposedFlow.push(coords);
+        proposedCircuitColor = node;
+        proposedCircuit.push(coords);
       }
     } else {
       if (node == false) return;
-      var colorExists = colorInFlows(node);
-      proposedFlowColor = node;
+      var colorExists = colorInCircuits(node);
+      proposedCircuitColor = node;
 
       if (colorExists !== false) {
-        currentFlows.splice(colorExists, 1);
+        currentCircuits.splice(colorExists, 1);
       }
 
-      proposedFlow.push(coords);
+      proposedCircuit.push(coords);
     }
   } catch (e) {
     console.warn("down event error");
   }
 
-  restoreFlows();
+  restoreCircuits();
   updateBoard();
   saveCurrentProgress();
 } // downEvent()
 
 function upEvent(event) {
-  if (!down && proposedFlow.length === 0) return;
+  if (!down && proposedCircuit.length === 0) return;
   event.preventDefault();
 
   down = false;
   try {
-    if (proposedFlow.length !== 0) {
-      currentFlows.push({
-        color: proposedFlowColor,
-        points: proposedFlow,
+    if (proposedCircuit.length !== 0) {
+      currentCircuits.push({
+        color: proposedCircuitColor,
+        points: proposedCircuit,
       });
     }
 
-    backupFlows();
+    backupCircuits();
     updateBoard();
     saveCurrentProgress();
   } catch (e) {
@@ -981,38 +983,37 @@ function moveTouchEvent(event) {
       }
     }
 
-    var same = compareCoords(proposedFlow.last(), coords);
-    var adjacent = isAdjacent(proposedFlow.last(), coords);
+    var same = compareCoords(proposedCircuit.last(), coords);
+    var adjacent = isAdjacent(proposedCircuit.last(), coords);
     var node = nodeColor(coords.x, coords.y);
     var matchingNode = isMatchingNode(coords.x, coords.y);
-    var inProposedFlow = posInProposedFlow(coords.x, coords.y);
+    var inProposedCircuit = posInProposedCircuit(coords.x, coords.y);
 
     if (
       !same &&
       adjacent &&
-      (!node || matchingNode || node == proposedFlowColor) &&
-      (!proposedFlowEnd || !!inProposedFlow)
+      (!node || matchingNode || node == proposedCircuitColor) &&
+      (!proposedCircuitEnd || !!inProposedCircuit)
     ) {
-      if (inProposedFlow === false) {
-        proposedFlow.push(coords);
+      if (inProposedCircuit === false) {
+        proposedCircuit.push(coords);
       } else {
         // handle backtracking
-        proposedFlow = proposedFlow.slice(0, inProposedFlow + 1);
+        proposedCircuit = proposedCircuit.slice(0, inProposedCircuit + 1);
       }
 
-      restoreFlows();
+      restoreCircuits();
 
-      // limit extra flow from end node
-      proposedFlowEnd = matchingNode ? true : false;
+      // limit extra circuit from end node
+      proposedCircuitEnd = matchingNode ? true : false;
 
-      // find conflicting flows and slice
-      var posInfo = anyProposedInCurrentFlows();
+      // find conflicting circuits and slice
+      var posInfo = anyProposedInCurrentCircuits();
       if (posInfo !== false) {
         posInfo.forEach(function (val, index) {
-          currentFlows[val.flow].points = currentFlows[val.flow].points.slice(
-            0,
-            val.pos,
-          );
+          currentCircuits[val.circuit].points = currentCircuits[
+            val.circuit
+          ].points.slice(0, val.pos);
         });
       }
 
@@ -1041,49 +1042,49 @@ function downTouchEvent(event) {
     }
 
     var node = nodeColor(coords.x, coords.y);
-    var flowExists = posInFlows(coords.x, coords.y);
-    if (flowExists !== false) {
+    var circuitExists = posInCircuits(coords.x, coords.y);
+    if (circuitExists !== false) {
       if (node == false) {
-        var flow = currentFlows.splice(flowExists.flow, 1)[0];
-        proposedFlow = flow.points.slice(0, flowExists.pos + 1);
-        proposedFlowColor = flow.color;
+        var circuit = currentCircuits.splice(circuitExists.circuit, 1)[0];
+        proposedCircuit = circuit.points.slice(0, circuitExists.pos + 1);
+        proposedCircuitColor = circuit.color;
       } else {
-        proposedFlowColor = node;
-        proposedFlow.push(coords);
+        proposedCircuitColor = node;
+        proposedCircuit.push(coords);
       }
     } else {
       if (node == false) return;
-      var colorExists = colorInFlows(node);
-      proposedFlowColor = node;
+      var colorExists = colorInCircuits(node);
+      proposedCircuitColor = node;
 
       if (colorExists !== false) {
-        currentFlows.splice(colorExists, 1);
+        currentCircuits.splice(colorExists, 1);
       }
 
-      proposedFlow.push(coords);
+      proposedCircuit.push(coords);
     }
   } catch (e) {}
 
-  restoreFlows();
+  restoreCircuits();
   updateBoard();
   saveCurrentProgress();
 } // downTouchEvent()
 
 function upTouchEvent(event) {
-  if (!down && proposedFlow.length === 0) return;
+  if (!down && proposedCircuit.length === 0) return;
   event.preventDefault();
 
   down = false;
   touchId = undefined;
 
-  if (proposedFlow.length !== 0) {
-    currentFlows.push({
-      color: proposedFlowColor,
-      points: proposedFlow,
+  if (proposedCircuit.length !== 0) {
+    currentCircuits.push({
+      color: proposedCircuitColor,
+      points: proposedCircuit,
     });
   }
 
-  backupFlows();
+  backupCircuits();
 
   try {
     updateBoard();
@@ -1102,8 +1103,8 @@ function updateBoard() {
   clear();
   drawGrid();
   drawNodes();
-  drawFlows();
-  drawProposedFlow();
+  drawCircuits();
+  drawProposedCircuit();
 
   proportionFilled = calculateProportionFilled();
   if (completed) drawCompletionMessage();
@@ -1119,8 +1120,8 @@ function init() {
 
   cellSize = size / board.size;
 
-  proposedFlowColor = false;
-  proposedFlowEnd = false;
+  proposedCircuitColor = false;
+  proposedCircuitEnd = false;
 
   availableCells = board.size * board.size;
   cellProportion = 1 / availableCells;

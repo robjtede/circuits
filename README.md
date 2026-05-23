@@ -1,6 +1,6 @@
-## Flow
+## Circuits
 
-A small canvas-based Flow game.
+A small canvas-based Circuits game.
 
 ### Development
 
@@ -25,13 +25,13 @@ npm run build
 Build the container image:
 
 ```sh
-docker build -t flow .
+docker build -t circuits .
 ```
 
 Run the container locally:
 
 ```sh
-docker run --rm -p 8080:80 flow
+docker run --rm -p 8080:80 circuits
 ```
 
 ### Known Issues
@@ -44,5 +44,5 @@ docker run --rm -p 8080:80 flow
 - Handle window resize
 - Level design/creator tool
 - Database system
-- Check amount of flows completed
+- Check amount of circuits completed
 - Assume straight line behavior
