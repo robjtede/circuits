@@ -966,12 +966,14 @@ function moveEvent(event: MouseEvent): false | void {
     var node = nodeColor(coords.x, coords.y);
     var matchingNode = isMatchingNode(coords.x, coords.y);
     var inProposedCircuit = posInProposedCircuit(coords.x, coords.y);
+    var isTruncating = inProposedCircuit !== false;
 
     if (
       !same &&
-      adjacent &&
-      (!node || matchingNode || node == proposedCircuitColor) &&
-      (!proposedCircuitEnd || !!inProposedCircuit)
+      (isTruncating ||
+        (adjacent &&
+          (!node || matchingNode || node == proposedCircuitColor) &&
+          !proposedCircuitEnd))
     ) {
       if (inProposedCircuit === false) {
         proposedCircuit.push(coords);
@@ -1090,12 +1092,14 @@ function moveTouchEvent(event: TouchEvent): false | void {
     var node = nodeColor(coords.x, coords.y);
     var matchingNode = isMatchingNode(coords.x, coords.y);
     var inProposedCircuit = posInProposedCircuit(coords.x, coords.y);
+    var isTruncating = inProposedCircuit !== false;
 
     if (
       !same &&
-      adjacent &&
-      (!node || matchingNode || node == proposedCircuitColor) &&
-      (!proposedCircuitEnd || !!inProposedCircuit)
+      (isTruncating ||
+        (adjacent &&
+          (!node || matchingNode || node == proposedCircuitColor) &&
+          !proposedCircuitEnd))
     ) {
       if (inProposedCircuit === false) {
         proposedCircuit.push(coords);
