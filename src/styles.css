@@ -124,6 +124,11 @@ select {
   border-color: #88d498;
 }
 
+.level-button.is-perfect {
+  background: #fff8d8;
+  border-color: #e4bf47;
+}
+
 .level-button.is-current {
   background: #ffd166;
   border-color: #ffe29a;
@@ -155,6 +160,10 @@ select {
   font-size: 16px;
   line-height: 1;
   text-align: right;
+}
+
+.level-button.is-perfect .level-button-check {
+  color: #9a6a00;
 }
 
 .progress-status {

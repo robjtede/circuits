@@ -91,6 +91,9 @@ var proportionFilled: number;
 var currentGroupIndex: number;
 var currentLevelIndex: number;
 var completed: boolean;
+var perfectRun: boolean;
+var recentCompletedColor: string | undefined;
+var oldCompletedColors: string[];
 
 currentGroupIndex = 0;
 currentLevelIndex = 0;
@@ -202,7 +205,7 @@ function compactCircuits(circuits: Circuit[]): SavedCircuit[] {
 
 function saveCurrentProgress() {
   try {
-    if (prevCircuits.length === 0) {
+    if (prevCircuits.length === 0 && perfectRun) {
       localStorage.removeItem(storageKey());
       return;
     }
@@ -211,6 +214,9 @@ function saveCurrentProgress() {
       storageKey(),
       JSON.stringify({
         version: 1,
+        perfect: perfectRun,
+        recentCompletedColor: recentCompletedColor,
+        oldCompletedColors: oldCompletedColors,
         circuits: compactCircuits(prevCircuits),
       }),
     );
@@ -223,31 +229,50 @@ function clearSavedProgress() {
   } catch (e) {}
 }
 
-function saveCurrentCompletion() {
+function clearSavedCompletion() {
   try {
-    localStorage.setItem(completionStorageKey(currentLevel()), "1");
+    localStorage.removeItem(completionStorageKey(currentLevel()));
   } catch (e) {}
 }
 
-function isLevelCompleted(level: Level): boolean {
+function saveCurrentCompletion() {
   try {
-    if (localStorage.getItem(completionStorageKey(level)) === "1") {
-      return true;
+    var key = completionStorageKey(currentLevel());
+    var current = localStorage.getItem(key);
+
+    if (current === "perfect") return;
+
+    localStorage.setItem(key, perfectRun ? "perfect" : "complete");
+  } catch (e) {}
+}
+
+type CompletionStatus = "none" | "complete" | "perfect";
+
+function completionStatus(level: Level): CompletionStatus {
+  try {
+    var savedCompletion = localStorage.getItem(completionStorageKey(level));
+
+    if (savedCompletion === "perfect") {
+      return "perfect";
     }
 
-    return isSavedProgressComplete(level);
+    if (savedCompletion === "1" || savedCompletion === "complete") {
+      return "complete";
+    }
+
+    return savedProgressCompletionStatus(level);
   } catch (e) {
-    return false;
+    return "none";
   }
 }
 
-function isSavedProgressComplete(level: Level): boolean {
+function savedProgressCompletionStatus(level: Level): CompletionStatus {
   try {
     var saved = JSON.parse(
       localStorage.getItem(progressStorageKey(level)) || "null",
     );
 
-    if (!saved || !Array.isArray(saved.circuits)) return false;
+    if (!saved || !Array.isArray(saved.circuits)) return "none";
 
     var total = saved.circuits.reduce(function (sum: number, circuit: any) {
       if (!circuit || !Array.isArray(circuit.points)) return sum;
@@ -255,9 +280,11 @@ function isSavedProgressComplete(level: Level): boolean {
       return sum + circuit.points.length;
     }, 0);
 
-    return total === level.size * level.size;
+    if (total !== level.size * level.size) return "none";
+
+    return saved.perfect === true ? "perfect" : "complete";
   } catch (e) {
-    return false;
+    return "none";
   }
 }
 
@@ -266,6 +293,17 @@ function loadSavedProgress(): void {
     var saved = JSON.parse(localStorage.getItem(storageKey()) || "null");
 
     if (!saved || !Array.isArray(saved.circuits)) return;
+
+    perfectRun = saved.perfect === true;
+    recentCompletedColor =
+      typeof saved.recentCompletedColor === "string"
+        ? saved.recentCompletedColor
+        : undefined;
+    oldCompletedColors = Array.isArray(saved.oldCompletedColors)
+      ? saved.oldCompletedColors.filter(function (color: unknown) {
+          return typeof color === "string";
+        })
+      : [];
 
     prevCircuits = saved.circuits
       .map(function (circuit: any) {
@@ -361,7 +399,9 @@ function populateLevelList() {
     var name = document.createElement("span");
     var checkmark = document.createElement("span");
     var isCurrent = index === currentLevelIndex;
-    var isComplete = isLevelCompleted(level);
+    var status = completionStatus(level);
+    var isComplete = status !== "none";
+    var isPerfect = status === "perfect";
 
     button.type = "button";
     button.className = "level-button";
@@ -369,18 +409,19 @@ function populateLevelList() {
     button.dataset.levelIndex = String(index);
     button.setAttribute(
       "aria-label",
-      level.name + (isComplete ? " complete" : ""),
+      level.name + (isPerfect ? " perfect" : isComplete ? " complete" : ""),
     );
     if (isCurrent) {
       button.classList.add("is-current");
       button.setAttribute("aria-current", "true");
     }
     if (isComplete) button.classList.add("is-complete");
+    if (isPerfect) button.classList.add("is-perfect");
 
     name.className = "level-button-name";
     name.textContent = level.name;
     checkmark.className = "level-button-check";
-    checkmark.textContent = isComplete ? "✓" : "";
+    checkmark.textContent = isPerfect ? "★" : isComplete ? "✓" : "";
     checkmark.setAttribute("aria-hidden", "true");
 
     button.append(name, checkmark);
@@ -419,6 +460,9 @@ function openLevel() {
   down = false;
   touchId = undefined;
   completed = false;
+  perfectRun = true;
+  recentCompletedColor = undefined;
+  oldCompletedColors = [];
   hideCompletionOverlay();
   prevCircuits = [];
   currentCircuits = [];
@@ -433,6 +477,7 @@ function openLevel() {
 
 function resetGame() {
   clearSavedProgress();
+  clearSavedCompletion();
   openLevel();
 }
 
@@ -619,6 +664,76 @@ function nodeColor(x: number, y: number): string | false {
 
   return found;
 } // nodeColor()
+
+function markPathStart(color: string | false | undefined): void {
+  if (!color) return;
+
+  if (recentCompletedColor && color !== recentCompletedColor) {
+    rememberOldCompletedColor(recentCompletedColor);
+    recentCompletedColor = undefined;
+  }
+
+  if (isOldCompletedColor(color)) {
+    perfectRun = false;
+  }
+}
+
+function rememberOldCompletedColor(color: string): void {
+  if (!isOldCompletedColor(color)) {
+    oldCompletedColors.push(color);
+  }
+}
+
+function isOldCompletedColor(color: string): boolean {
+  return oldCompletedColors.indexOf(color) !== -1;
+}
+
+function markOverwrittenCircuit(circuit: Circuit | undefined): void {
+  if (!circuit) return;
+
+  if (isOldCompletedColor(circuit.color)) {
+    perfectRun = false;
+  }
+}
+
+function commitProposedCircuit(): void {
+  if (proposedCircuit.length === 0 || !proposedCircuitColor) return;
+
+  var circuit = {
+    color: proposedCircuitColor,
+    points: proposedCircuit,
+  };
+
+  currentCircuits.push(circuit);
+  rememberCommittedCircuit(circuit);
+}
+
+function rememberCommittedCircuit(circuit: Circuit): void {
+  if (isCircuitComplete(circuit)) {
+    recentCompletedColor = circuit.color;
+    return;
+  }
+
+  if (recentCompletedColor === circuit.color) {
+    recentCompletedColor = undefined;
+  }
+}
+
+function isCircuitComplete(circuit: Circuit): boolean {
+  var colorIndex = colors.indexOf(circuit.color);
+
+  if (colorIndex < 0 || colorIndex >= board.nodes.length) return false;
+  if (circuit.points.length < 2) return false;
+
+  var pair = board.nodes[colorIndex];
+  var first = circuit.points.first();
+  var last = circuit.points.last();
+
+  return (
+    (compareCoords(first, pair[0]) && compareCoords(last, pair[1])) ||
+    (compareCoords(first, pair[1]) && compareCoords(last, pair[0]))
+  );
+}
 
 function drawProposedCircuit() {
   try {
@@ -868,6 +983,7 @@ function moveEvent(event: MouseEvent): false | void {
       var posInfo = anyProposedInCurrentCircuits();
       if (posInfo !== false) {
         posInfo.forEach(function (val, index) {
+          markOverwrittenCircuit(currentCircuits[val.circuit]);
           currentCircuits[val.circuit].points = currentCircuits[
             val.circuit
           ].points.slice(0, val.pos);
@@ -913,6 +1029,10 @@ function downEvent(event: MouseEvent): void {
 
       proposedCircuit.push(coords);
     }
+
+    if (proposedCircuit.length > 0) {
+      markPathStart(proposedCircuitColor);
+    }
   } catch (e) {
     console.warn("down event error");
   }
@@ -928,14 +1048,7 @@ function upEvent(event: MouseEvent): void {
 
   down = false;
   try {
-    if (proposedCircuit.length !== 0) {
-      if (proposedCircuitColor) {
-        currentCircuits.push({
-          color: proposedCircuitColor,
-          points: proposedCircuit,
-        });
-      }
-    }
+    commitProposedCircuit();
 
     backupCircuits();
     updateBoard();
@@ -994,6 +1107,7 @@ function moveTouchEvent(event: TouchEvent): false | void {
       var posInfo = anyProposedInCurrentCircuits();
       if (posInfo !== false) {
         posInfo.forEach(function (val, index) {
+          markOverwrittenCircuit(currentCircuits[val.circuit]);
           currentCircuits[val.circuit].points = currentCircuits[
             val.circuit
           ].points.slice(0, val.pos);
@@ -1048,6 +1162,10 @@ function downTouchEvent(event: TouchEvent): void {
 
       proposedCircuit.push(coords);
     }
+
+    if (proposedCircuit.length > 0) {
+      markPathStart(proposedCircuitColor);
+    }
   } catch (e) {}
 
   restoreCircuits();
@@ -1062,14 +1180,7 @@ function upTouchEvent(event: TouchEvent): void {
   down = false;
   touchId = undefined;
 
-  if (proposedCircuit.length !== 0) {
-    if (proposedCircuitColor) {
-      currentCircuits.push({
-        color: proposedCircuitColor,
-        points: proposedCircuit,
-      });
-    }
-  }
+  commitProposedCircuit();
 
   backupCircuits();
 
