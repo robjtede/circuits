@@ -118,13 +118,14 @@ fn run_generate(args: GenerateArgs) -> i32 {
             .collect::<Vec<_>>()
             .join(",");
         eprintln!(
-            "seed={} attempts={} template={} lengths={} rewardScore={} longestLine={} totalBends={} averageBends={:.2}",
+            "seed={} attempts={} template={} lengths={} rewardScore={} longestPath={} longestStraightRun={} totalBends={} averageBends={:.2}",
             generated.seed,
             generated.attempts,
             generated.template,
             lengths,
             generated.reward.score,
-            generated.reward.longest_line,
+            generated.reward.longest_path,
+            generated.reward.longest_straight_run,
             generated.reward.total_bends,
             generated.reward.average_bends()
         );
@@ -197,7 +198,7 @@ mod tests {
     }
 
     #[test]
-    fn default_square_generation_uses_balanced_path_tiling() {
+    fn default_square_generation_uses_variable_path_tiling() {
         let args = GenerateArgs {
             width: 6,
             height: 6,
@@ -213,8 +214,31 @@ mod tests {
         let generated = generate_puzzle(&args).expect("generated puzzle");
 
         assert_eq!(generated.template, "path-tiling");
-        assert_eq!(generated.lengths, vec![6; 6]);
+        assert_eq!(generated.lengths.iter().sum::<usize>(), 36);
+        assert!(generated.lengths.iter().any(|length| *length < 6));
+        assert!(generated.lengths.iter().any(|length| *length > 6));
         assert_eq!(generated.reward.path_count, 6);
+    }
+
+    #[test]
+    fn square_generation_allows_one_fewer_pair_with_new_tiler() {
+        let args = GenerateArgs {
+            width: 5,
+            height: 5,
+            pairs: Some(4),
+            seed: Some(202605265506),
+            attempts: 10_000,
+            show_solution: false,
+            stats: false,
+            verify: true,
+            timeout_ms: 30_000,
+        };
+
+        let generated = generate_puzzle(&args).expect("generated puzzle");
+
+        assert!(matches!(generated.template, "path-tiling" | "noise-tiling"));
+        assert_eq!(generated.lengths.iter().sum::<usize>(), 25);
+        assert_eq!(generated.reward.path_count, 4);
     }
 
     #[test]
@@ -235,7 +259,7 @@ mod tests {
 
         assert!(!has_same_label_block(&generated.solution_rows));
         assert!(!is_band_heavy(&generated.solution_rows));
-        assert!(generated.reward.longest_line <= 9);
+        assert!(generated.reward.longest_straight_run <= 9);
         assert!(generated.reward.average_bends() >= 0.25);
     }
 

@@ -112,6 +112,72 @@ function storageKey(): string {
   return progressStorageKey(currentLevel());
 }
 
+function currentLevelHash(): string {
+  return "#" + encodeURIComponent(currentLevel().id);
+}
+
+function levelIdFromHash(): string | undefined {
+  var hash = window.location.hash.slice(1);
+
+  if (!hash) return undefined;
+
+  try {
+    return decodeURIComponent(hash);
+  } catch {
+    return undefined;
+  }
+}
+
+function findLevelLocation(
+  levelId: string,
+): { groupIndex: number; levelIndex: number } | undefined {
+  var groupIndex: number;
+  var levelIndex: number;
+
+  for (groupIndex = 0; groupIndex < levelGroups.length; groupIndex++) {
+    levelIndex = levelGroups[groupIndex].levels.findIndex(function (level) {
+      return level.id === levelId;
+    });
+
+    if (levelIndex !== -1)
+      return { groupIndex: groupIndex, levelIndex: levelIndex };
+  }
+
+  return undefined;
+}
+
+function updateLevelHash(pushHistory: boolean): void {
+  var nextHash = currentLevelHash();
+
+  if (window.location.hash === nextHash) return;
+
+  if (pushHistory) {
+    window.history.pushState(null, "", nextHash);
+  } else {
+    window.history.replaceState(null, "", nextHash);
+  }
+}
+
+function openLevelFromHash(): boolean {
+  var levelId = levelIdFromHash();
+  var location = levelId ? findLevelLocation(levelId) : undefined;
+
+  if (!location) return false;
+
+  currentGroupIndex = location.groupIndex;
+  currentLevelIndex = location.levelIndex;
+  groupSelect.value = currentGroup().id;
+  board = cloneLevel(currentLevel());
+  openLevel();
+  return true;
+}
+
+function handleUrlLevelChange(): void {
+  if (openLevelFromHash()) return;
+
+  updateLevelHash(false);
+}
+
 function cloneCircuits(circuits: Circuit[]): Circuit[] {
   return circuits.map(function (circuit) {
     return {
@@ -334,6 +400,7 @@ function selectGroup(groupId: string): void {
   currentLevelIndex = 0;
   groupSelect.value = currentGroup().id;
   board = cloneLevel(currentLevel());
+  updateLevelHash(true);
   openLevel();
 }
 
@@ -344,6 +411,7 @@ function selectLevel(levelId: string): void {
   currentLevelIndex = nextLevelIndex === -1 ? 0 : nextLevelIndex;
 
   board = cloneLevel(currentLevel());
+  updateLevelHash(true);
   openLevel();
 }
 
@@ -378,6 +446,7 @@ function nextLevel() {
   }
 
   board = cloneLevel(currentLevel());
+  updateLevelHash(true);
   openLevel();
 }
 
@@ -1057,9 +1126,11 @@ function init() {
 } // init()
 
 populateGroupSelect();
-groupSelect.value = currentGroup().id;
-populateLevelList();
-openLevel();
+if (!openLevelFromHash()) {
+  groupSelect.value = currentGroup().id;
+  updateLevelHash(false);
+  openLevel();
+}
 
 window.addEventListener("mousedown", downEvent);
 window.addEventListener("mousemove", moveEvent);
@@ -1069,6 +1140,8 @@ window.addEventListener("touchstart", downTouchEvent);
 window.addEventListener("touchmove", moveTouchEvent);
 window.addEventListener("touchend", upTouchEvent);
 window.addEventListener("touchcancel", upTouchEvent);
+window.addEventListener("hashchange", handleUrlLevelChange);
+window.addEventListener("popstate", handleUrlLevelChange);
 resizeObserver = new ResizeObserver(resizeCanvas);
 resizeObserver.observe(canvas);
 

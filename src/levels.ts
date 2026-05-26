@@ -69,6 +69,7 @@ import level_11_07 from "./levels/11x11/11-07.json";
 import level_11_08 from "./levels/11x11/11-08.json";
 import level_11_09 from "./levels/11x11/11-09.json";
 import level_11_10 from "./levels/11x11/11-10.json";
+import level_11_11 from "./levels/11x11/11-11.json";
 
 export var colors: string[] = [
   "red",
@@ -166,6 +167,7 @@ export var levelGroups: LevelGroup[] = groupLevels([
   level_11_08,
   level_11_09,
   level_11_10,
+  level_11_11,
 ]);
 
 function groupLevels(rawLevels: unknown[]): LevelGroup[] {
@@ -191,8 +193,8 @@ function groupLevels(rawLevels: unknown[]): LevelGroup[] {
     .forEach(function (size) {
       var levels = groupBySize.get(size) || [];
 
-      if (levels.length !== 10) {
-        throw new Error(size + "x" + size + " must contain exactly 10 levels");
+      if (levels.length === 0) {
+        throw new Error(size + "x" + size + " must contain at least one level");
       }
 
       groups.push({

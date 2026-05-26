@@ -104,12 +104,13 @@ select {
 
 .level-button {
   align-items: center;
+  border-left: 6px solid transparent;
   cursor: pointer;
   display: grid;
   font-weight: 700;
   grid-template-columns: minmax(0, 1fr) 20px;
   justify-content: stretch;
-  padding: 0 10px;
+  padding: 0 10px 0 6px;
   text-align: left;
   width: 100%;
 }
@@ -118,14 +119,29 @@ select {
   background: #ffffff;
 }
 
-.level-button.is-current {
-  border-color: #ffd166;
-  box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.4);
-}
-
 .level-button.is-complete {
   background: #eafff0;
   border-color: #88d498;
+}
+
+.level-button.is-current {
+  background: #ffd166;
+  border-color: #ffe29a;
+  border-left-color: #ff7a1a;
+  box-shadow:
+    0 0 0 2px rgba(255, 209, 102, 0.45),
+    0 10px 22px rgba(255, 209, 102, 0.18);
+  color: #111;
+}
+
+.level-button.is-current.is-complete {
+  background: #ffd166;
+  border-color: #ffe29a;
+  border-left-color: #ff7a1a;
+}
+
+.level-button.is-current .level-button-name {
+  font-weight: 900;
 }
 
 .level-button-name {

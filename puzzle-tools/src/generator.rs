@@ -27,7 +27,8 @@ struct SolutionCandidate {
 #[derive(Clone, Copy)]
 pub struct SolutionReward {
     pub score: isize,
-    pub longest_line: usize,
+    pub longest_path: usize,
+    pub longest_straight_run: usize,
     pub total_bends: usize,
     pub path_count: usize,
 }
@@ -81,7 +82,7 @@ pub fn generate_puzzle(args: &GenerateArgs) -> Result<GeneratedPuzzle, String> {
     let mut rng = Rng::new(seed);
     let mut best_candidate: Option<GeneratedPuzzle> = None;
     let mut accepted_candidates = 0;
-    let reward_sample_target = reward_sample_target(args.width, args.height);
+    let reward_sample_target = reward_sample_target(args.width, args.height, pair_count);
 
     for attempt in 1..=args.attempts {
         let Some(solution_candidate) =
@@ -177,8 +178,10 @@ pub fn generate_puzzle(args: &GenerateArgs) -> Result<GeneratedPuzzle, String> {
     })
 }
 
-fn reward_sample_target(width: usize, height: usize) -> usize {
-    if width.min(height) >= 8 {
+fn reward_sample_target(width: usize, height: usize, pair_count: usize) -> usize {
+    if width == height && width >= 5 && pair_count == width {
+        1
+    } else if width.min(height) >= 8 {
         8
     } else {
         4
@@ -208,6 +211,12 @@ impl Rng {
         (self.next_u64() % upper_bound as u64) as usize
     }
 
+    fn unit_f64(&mut self) -> f64 {
+        let mantissa = self.next_u64() >> 11;
+
+        mantissa as f64 / ((1_u64 << 53) as f64)
+    }
+
     fn shuffle<T>(&mut self, values: &mut [T]) {
         for index in (1..values.len()).rev() {
             values.swap(index, self.usize(index + 1));
@@ -234,7 +243,21 @@ fn random_solution_candidate(
     pair_count: usize,
     rng: &mut Rng,
 ) -> Option<SolutionCandidate> {
-    if width == height && width >= 5 && pair_count == width.min(height) {
+    if width == height && width >= 5 && pair_count <= width.min(height) {
+        let use_noise = rng.usize(2) == 0;
+
+        if use_noise {
+            if let Some(paths) = random_noise_path_tiling(width, height, pair_count, rng) {
+                let lengths = paths.iter().map(Vec::len).collect();
+
+                return Some(SolutionCandidate {
+                    paths,
+                    template: "noise-tiling",
+                    lengths,
+                });
+            }
+        }
+
         if let Some(paths) = random_path_tiling(width, height, pair_count, rng) {
             let lengths = paths.iter().map(Vec::len).collect();
 
@@ -243,6 +266,18 @@ fn random_solution_candidate(
                 template: "path-tiling",
                 lengths,
             });
+        }
+
+        if !use_noise {
+            if let Some(paths) = random_noise_path_tiling(width, height, pair_count, rng) {
+                let lengths = paths.iter().map(Vec::len).collect();
+
+                return Some(SolutionCandidate {
+                    paths,
+                    template: "noise-tiling",
+                    lengths,
+                });
+            }
         }
     }
 
@@ -517,30 +552,42 @@ fn random_path_tiling(
     pair_count: usize,
     rng: &mut Rng,
 ) -> Option<Vec<Vec<usize>>> {
+    random_path_tiling_with_field(width, height, pair_count, None, rng)
+}
+
+fn random_noise_path_tiling(
+    width: usize,
+    height: usize,
+    pair_count: usize,
+    rng: &mut Rng,
+) -> Option<Vec<Vec<usize>>> {
+    let field = NoiseField::new(width, height, rng);
+
+    random_path_tiling_with_field(width, height, pair_count, Some(&field), rng)
+}
+
+fn random_path_tiling_with_field(
+    width: usize,
+    height: usize,
+    pair_count: usize,
+    field: Option<&NoiseField>,
+    rng: &mut Rng,
+) -> Option<Vec<Vec<usize>>> {
     let total_cells = width * height;
-
-    if total_cells % pair_count != 0 {
-        return None;
-    }
-
-    let path_length = total_cells / pair_count;
-
-    if path_length < MIN_GENERATED_PATH_LENGTH {
-        return None;
-    }
+    let mut remaining_lengths = random_tiling_path_lengths(total_cells, pair_count, rng)?;
 
     let mut occupied = vec![false; total_cells];
     let mut paths = Vec::with_capacity(pair_count);
-    let mut budget = 40_000;
+    let mut budget = 15_000;
 
     if tile_paths(
         width,
         height,
-        pair_count,
-        path_length,
+        &mut remaining_lengths,
         &mut occupied,
         &mut paths,
         &mut budget,
+        field,
         rng,
     ) {
         Some(paths)
@@ -549,17 +596,67 @@ fn random_path_tiling(
     }
 }
 
+fn random_tiling_path_lengths(
+    total_cells: usize,
+    pair_count: usize,
+    rng: &mut Rng,
+) -> Option<Vec<usize>> {
+    if total_cells < pair_count * MIN_GENERATED_PATH_LENGTH {
+        return None;
+    }
+
+    let average = total_cells / pair_count;
+    let max_length = (average * 2)
+        .max(MIN_GENERATED_PATH_LENGTH)
+        .min(total_cells - MIN_GENERATED_PATH_LENGTH * (pair_count - 1));
+
+    for _ in 0..64 {
+        let mut lengths = vec![MIN_GENERATED_PATH_LENGTH; pair_count];
+        let mut remaining = total_cells - pair_count * MIN_GENERATED_PATH_LENGTH;
+
+        while remaining > 0 {
+            let index = rng.usize(pair_count);
+
+            if lengths[index] < max_length {
+                lengths[index] += 1;
+                remaining -= 1;
+            }
+        }
+
+        if path_lengths_are_varied(&lengths, average) {
+            rng.shuffle(&mut lengths);
+            return Some(lengths);
+        }
+    }
+
+    let mut lengths = random_segment_lengths(total_cells, pair_count, rng);
+    rng.shuffle(&mut lengths);
+    Some(lengths)
+}
+
+fn path_lengths_are_varied(lengths: &[usize], average: usize) -> bool {
+    if lengths.len() < 3 {
+        return true;
+    }
+
+    let min_length = lengths.iter().copied().min().unwrap_or(0);
+    let max_length = lengths.iter().copied().max().unwrap_or(0);
+    let spread_target = (average / 3).max(2);
+
+    min_length < average && max_length > average && max_length - min_length >= spread_target
+}
+
 fn tile_paths(
     width: usize,
     height: usize,
-    pair_count: usize,
-    path_length: usize,
+    remaining_lengths: &mut Vec<usize>,
     occupied: &mut [bool],
     paths: &mut Vec<Vec<usize>>,
     budget: &mut usize,
+    field: Option<&NoiseField>,
     rng: &mut Rng,
 ) -> bool {
-    if paths.len() == pair_count {
+    if remaining_lengths.is_empty() {
         return occupied.iter().all(|cell| *cell);
     }
 
@@ -568,42 +665,61 @@ fn tile_paths(
     }
     *budget -= 1;
 
-    if uncovered_components_are_invalid(width, height, occupied, path_length) {
+    if uncovered_components_are_invalid(width, height, occupied, remaining_lengths) {
         return false;
     }
 
-    let Some(start) = best_unoccupied_cell(width, height, occupied) else {
+    let Some(start) = best_unoccupied_cell(width, height, occupied, rng) else {
         return false;
     };
-    let mut candidates = path_candidates(width, height, path_length, start, occupied, rng);
 
-    candidates.sort_by(|left, right| {
-        path_candidate_score(width, right).cmp(&path_candidate_score(width, left))
-    });
+    let mut length_indices = (0..remaining_lengths.len()).collect::<Vec<_>>();
+    rng.shuffle(&mut length_indices);
+    length_indices.sort_by(|left, right| remaining_lengths[*right].cmp(&remaining_lengths[*left]));
+    let mut tried_lengths = Vec::new();
 
-    for candidate in candidates {
-        for pos in candidate.iter().copied() {
-            occupied[pos] = true;
+    for length_index in length_indices {
+        let path_length = remaining_lengths[length_index];
+
+        if tried_lengths.contains(&path_length) {
+            continue;
         }
-        paths.push(candidate);
+        tried_lengths.push(path_length);
 
-        if tile_paths(
-            width,
-            height,
-            pair_count,
-            path_length,
-            occupied,
-            paths,
-            budget,
-            rng,
-        ) {
-            return true;
+        let mut candidates = path_candidates(width, height, path_length, start, occupied, rng);
+
+        candidates.sort_by(|left, right| {
+            path_candidate_score(width, right, field).cmp(&path_candidate_score(width, left, field))
+        });
+
+        let path_length = remaining_lengths.remove(length_index);
+
+        for candidate in candidates {
+            for pos in candidate.iter().copied() {
+                occupied[pos] = true;
+            }
+            paths.push(candidate);
+
+            if tile_paths(
+                width,
+                height,
+                remaining_lengths,
+                occupied,
+                paths,
+                budget,
+                field,
+                rng,
+            ) {
+                return true;
+            }
+
+            let candidate = paths.pop().expect("candidate path exists");
+            for pos in candidate {
+                occupied[pos] = false;
+            }
         }
 
-        let candidate = paths.pop().expect("candidate path exists");
-        for pos in candidate {
-            occupied[pos] = false;
-        }
+        remaining_lengths.insert(length_index, path_length);
     }
 
     false
@@ -708,13 +824,138 @@ fn path_shape_is_interesting(path_length: usize, metrics: PathMetrics) -> bool {
         path_length.saturating_sub(1).max(3)
     };
 
-    metrics.bends >= min_bends && metrics.longest_line <= longest_allowed
+    metrics.bends >= min_bends && metrics.longest_straight_run <= longest_allowed
 }
 
-fn path_candidate_score(width: usize, path: &[usize]) -> isize {
+fn path_candidate_score(width: usize, path: &[usize], field: Option<&NoiseField>) -> isize {
     let metrics = path_position_metrics(width, path);
+    let field_score = field.map_or(0, |field| field.path_score(path));
 
-    (metrics.bends as isize * 10) - metrics.longest_line as isize
+    (metrics.bends as isize * 10) + path.len() as isize - metrics.longest_straight_run as isize
+        + field_score
+}
+
+struct NoiseField {
+    width: usize,
+    height: usize,
+    values: Vec<f64>,
+}
+
+impl NoiseField {
+    fn new(width: usize, height: usize, rng: &mut Rng) -> Self {
+        let octaves = [(4, 1.0), (7, 0.55), (11, 0.25)];
+        let mut values = vec![0.0; width * height];
+        let mut total_weight = 0.0;
+
+        for (step, weight) in octaves {
+            let octave = ValueNoiseOctave::new(width, height, step, rng);
+
+            for y in 0..height {
+                for x in 0..width {
+                    values[index_for(width, x, y)] += octave.value_at(x, y) * weight;
+                }
+            }
+
+            total_weight += weight;
+        }
+
+        for value in &mut values {
+            *value /= total_weight;
+        }
+
+        Self {
+            width,
+            height,
+            values,
+        }
+    }
+
+    fn path_score(&self, path: &[usize]) -> isize {
+        let mut in_path = vec![false; self.values.len()];
+        let mut path_sum = 0.0;
+        let mut step_delta = 0.0;
+
+        for pos in path.iter().copied() {
+            in_path[pos] = true;
+            path_sum += self.values[pos];
+        }
+
+        for step in path.windows(2) {
+            step_delta += (self.values[step[0]] - self.values[step[1]]).abs();
+        }
+
+        let mean = path_sum / path.len() as f64;
+        let variance = path
+            .iter()
+            .copied()
+            .map(|pos| (self.values[pos] - mean).abs())
+            .sum::<f64>()
+            / path.len() as f64;
+        let boundary_delta = path
+            .iter()
+            .copied()
+            .flat_map(|pos| position_neighbors(self.width, self.height, pos))
+            .filter(|neighbor| !in_path[*neighbor])
+            .map(|neighbor| (self.values[neighbor] - mean).abs())
+            .sum::<f64>();
+
+        ((boundary_delta * 4.0) - (variance * 90.0) - (step_delta * 25.0)).round() as isize
+    }
+}
+
+struct ValueNoiseOctave {
+    step: usize,
+    grid_width: usize,
+    values: Vec<f64>,
+}
+
+impl ValueNoiseOctave {
+    fn new(width: usize, height: usize, step: usize, rng: &mut Rng) -> Self {
+        let grid_width = width.div_ceil(step) + 2;
+        let grid_height = height.div_ceil(step) + 2;
+        let mut values = Vec::with_capacity(grid_width * grid_height);
+
+        for _ in 0..grid_width * grid_height {
+            values.push(rng.unit_f64());
+        }
+
+        Self {
+            step,
+            grid_width,
+            values,
+        }
+    }
+
+    fn value_at(&self, x: usize, y: usize) -> f64 {
+        let left = x / self.step;
+        let top = y / self.step;
+        let local_x = smoothstep((x % self.step) as f64 / self.step as f64);
+        let local_y = smoothstep((y % self.step) as f64 / self.step as f64);
+        let top_value = lerp(
+            self.grid_value(left, top),
+            self.grid_value(left + 1, top),
+            local_x,
+        );
+        let bottom_value = lerp(
+            self.grid_value(left, top + 1),
+            self.grid_value(left + 1, top + 1),
+            local_x,
+        );
+
+        lerp(top_value, bottom_value, local_y)
+    }
+
+    fn grid_value(&self, x: usize, y: usize) -> f64 {
+        self.values[y * self.grid_width + x]
+    }
+}
+
+fn smoothstep(value: f64) -> f64 {
+    value * value * (3.0 - 2.0 * value)
+}
+
+fn lerp(left: f64, right: f64, t: f64) -> f64 {
+    left + (right - left) * t
 }
 
 fn path_position_metrics(width: usize, path: &[usize]) -> PathMetrics {
@@ -750,7 +991,8 @@ fn path_position_metrics(width: usize, path: &[usize]) -> PathMetrics {
     longest_line = longest_line.max(run_length);
 
     PathMetrics {
-        longest_line,
+        length: path.len(),
+        longest_straight_run: longest_line,
         bends,
     }
 }
@@ -775,9 +1017,10 @@ fn uncovered_components_are_invalid(
     width: usize,
     height: usize,
     occupied: &[bool],
-    path_length: usize,
+    remaining_lengths: &[usize],
 ) -> bool {
     let mut seen = vec![false; occupied.len()];
+    let mut component_sizes = Vec::new();
 
     for pos in 0..occupied.len() {
         if occupied[pos] || seen[pos] {
@@ -799,18 +1042,121 @@ fn uncovered_components_are_invalid(
             }
         }
 
-        if size < path_length || size % path_length != 0 {
+        component_sizes.push(size);
+    }
+
+    component_sizes_can_fit_lengths(&component_sizes, remaining_lengths)
+        .is_some_and(|can_fit| !can_fit)
+}
+
+fn component_sizes_can_fit_lengths(
+    component_sizes: &[usize],
+    remaining_lengths: &[usize],
+) -> Option<bool> {
+    let uncovered_cells = component_sizes.iter().sum::<usize>();
+    let remaining_cells = remaining_lengths.iter().sum::<usize>();
+
+    if uncovered_cells != remaining_cells {
+        return Some(false);
+    }
+
+    if component_sizes.is_empty() {
+        return Some(remaining_lengths.is_empty());
+    }
+
+    let min_length = remaining_lengths.iter().copied().min()?;
+    if component_sizes.iter().any(|size| *size < min_length) {
+        return Some(false);
+    }
+
+    if remaining_lengths.len() > 18 {
+        return None;
+    }
+
+    let mask_count = 1_usize << remaining_lengths.len();
+    let full_mask = mask_count - 1;
+    let mut mask_sums = vec![0; mask_count];
+
+    for mask in 1..mask_count {
+        let bit = mask.trailing_zeros() as usize;
+        let previous_mask = mask & !(1_usize << bit);
+        mask_sums[mask] = mask_sums[previous_mask] + remaining_lengths[bit];
+    }
+
+    let mut components = component_sizes.to_vec();
+    components.sort_unstable_by(|left, right| right.cmp(left));
+
+    Some(component_masks_can_fit(
+        0,
+        0,
+        full_mask,
+        &components,
+        &mask_sums,
+    ))
+}
+
+fn component_masks_can_fit(
+    component_index: usize,
+    used_mask: usize,
+    full_mask: usize,
+    components: &[usize],
+    mask_sums: &[usize],
+) -> bool {
+    if component_index == components.len() {
+        return used_mask == full_mask;
+    }
+
+    let target = components[component_index];
+    let available_mask = full_mask & !used_mask;
+    let mut mask = available_mask;
+
+    while mask > 0 {
+        if mask_sums[mask] == target
+            && component_masks_can_fit(
+                component_index + 1,
+                used_mask | mask,
+                full_mask,
+                components,
+                mask_sums,
+            )
+        {
             return true;
         }
+
+        mask = (mask - 1) & available_mask;
     }
 
     false
 }
 
-fn best_unoccupied_cell(width: usize, height: usize, occupied: &[bool]) -> Option<usize> {
-    (0..occupied.len())
-        .filter(|pos| !occupied[*pos])
-        .min_by_key(|pos| unoccupied_neighbor_count(width, height, *pos, occupied, occupied))
+fn best_unoccupied_cell(
+    width: usize,
+    height: usize,
+    occupied: &[bool],
+    rng: &mut Rng,
+) -> Option<usize> {
+    let mut best = Vec::new();
+    let mut best_neighbor_count = usize::MAX;
+
+    for pos in 0..occupied.len() {
+        if occupied[pos] {
+            continue;
+        }
+
+        let neighbor_count = unoccupied_neighbor_count(width, height, pos, occupied, occupied);
+
+        if neighbor_count < best_neighbor_count {
+            best.clear();
+            best_neighbor_count = neighbor_count;
+        }
+
+        if neighbor_count == best_neighbor_count {
+            best.push(pos);
+        }
+    }
+
+    rng.shuffle(&mut best);
+    best.first().copied()
 }
 
 fn available_neighbors(
@@ -1067,17 +1413,22 @@ fn reward_meets_target(
         return true;
     }
 
-    let longest_line_target = smaller_dimension.saturating_sub(1);
+    let longest_straight_run_target = smaller_dimension.saturating_sub(1);
     let bend_target = pair_count.div_ceil(3);
 
-    reward.longest_line <= longest_line_target.max(3) && reward.total_bends >= bend_target
+    reward.longest_straight_run <= longest_straight_run_target.max(3)
+        && reward.total_bends >= bend_target
 }
 
 fn reward_is_better(next: SolutionReward, current: SolutionReward) -> bool {
     next.score > current.score
-        || (next.score == current.score && next.longest_line < current.longest_line)
+        || (next.score == current.score && next.longest_path > current.longest_path)
         || (next.score == current.score
-            && next.longest_line == current.longest_line
+            && next.longest_path == current.longest_path
+            && next.longest_straight_run < current.longest_straight_run)
+        || (next.score == current.score
+            && next.longest_path == current.longest_path
+            && next.longest_straight_run == current.longest_straight_run
             && next.total_bends > current.total_bends)
 }
 
@@ -1087,28 +1438,33 @@ fn solution_reward(rows: &[String]) -> SolutionReward {
         .map(|row| row.chars().collect::<Vec<_>>())
         .collect::<Vec<_>>();
     let labels = solution_labels(&grid);
-    let mut longest_line = 1;
+    let mut longest_path = 1;
+    let mut longest_straight_run = 1;
     let mut total_bends = 0;
     let mut path_count = 0;
 
     for label in labels {
         if let Some(metrics) = label_path_metrics(&grid, label) {
-            longest_line = longest_line.max(metrics.longest_line);
+            longest_path = longest_path.max(metrics.length);
+            longest_straight_run = longest_straight_run.max(metrics.longest_straight_run);
             total_bends += metrics.bends;
             path_count += 1;
         }
     }
 
     SolutionReward {
-        score: (total_bends as isize * 100) - (longest_line as isize * 25),
-        longest_line,
+        score: (total_bends as isize * 100) + (longest_path as isize * 10)
+            - (longest_straight_run as isize * 25),
+        longest_path,
+        longest_straight_run,
         total_bends,
         path_count,
     }
 }
 
 struct PathMetrics {
-    longest_line: usize,
+    length: usize,
+    longest_straight_run: usize,
     bends: usize,
 }
 
@@ -1188,7 +1544,8 @@ fn label_path_metrics(grid: &[Vec<char>], label: char) -> Option<PathMetrics> {
     longest_line = longest_line.max(run_length);
 
     Some(PathMetrics {
-        longest_line,
+        length: cells.len(),
+        longest_straight_run: longest_line,
         bends,
     })
 }
