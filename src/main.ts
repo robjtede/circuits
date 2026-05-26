@@ -27,6 +27,7 @@ var canvas = document.createElement("canvas");
 var completionOverlay = document.createElement("div");
 var completionPanel = document.createElement("div");
 var completionTitle = document.createElement("h2");
+var completionScore = document.createElement("p");
 var completionActions = document.createElement("div");
 var completionNextButton = document.createElement("button");
 var completionCloseButton = document.createElement("button");
@@ -52,6 +53,8 @@ completionOverlay.hidden = true;
 completionPanel.className = "completion-panel";
 completionTitle.className = "completion-title";
 completionTitle.textContent = "Level Complete";
+completionScore.className = "completion-score";
+completionScore.hidden = true;
 completionActions.className = "completion-actions";
 completionNextButton.type = "button";
 completionNextButton.textContent = "Next";
@@ -62,7 +65,7 @@ groupLabel.appendChild(groupSelect);
 levelSidebar.append(levelSidebarTitle, levelList);
 toolbar.append(groupLabel, progressStatus, nextButton, resetButton);
 completionActions.append(completionNextButton, completionCloseButton);
-completionPanel.append(completionTitle, completionActions);
+completionPanel.append(completionTitle, completionScore, completionActions);
 completionOverlay.appendChild(completionPanel);
 boardArea.append(canvas, completionOverlay);
 playArea.append(levelSidebar, boardArea);
@@ -521,11 +524,14 @@ function completeLevel() {
 }
 
 function showCompletionOverlay() {
+  completionScore.textContent = perfectRun ? "Perfect" : "";
+  completionScore.hidden = !perfectRun;
   completionOverlay.hidden = false;
 }
 
 function hideCompletionOverlay() {
   completionOverlay.hidden = true;
+  completionScore.hidden = true;
 }
 
 function clear(): void {
