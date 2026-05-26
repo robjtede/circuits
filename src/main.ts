@@ -649,6 +649,23 @@ function isAdjacent(c1: Point | undefined, c2: Point | undefined): boolean {
   return false;
 } // isAdjacent()
 
+function skippedCellInSameDirection(
+  c1: Point | undefined,
+  c2: Point | undefined,
+): Point | false {
+  if (!c1 || !c2) return false;
+
+  if (c1.y === c2.y && Math.abs(c1.x - c2.x) === 2) {
+    return { x: (c1.x + c2.x) / 2, y: c1.y };
+  }
+
+  if (c1.x === c2.x && Math.abs(c1.y - c2.y) === 2) {
+    return { x: c1.x, y: (c1.y + c2.y) / 2 };
+  }
+
+  return false;
+}
+
 function isNode(x: number, y: number): boolean {
   var found = false;
 
@@ -871,6 +888,81 @@ function posInProposedCircuit(x: number, y: number): number | false {
   return found;
 } // isInProposedCircuit()
 
+function addProposedCircuitPoint(coords: Point): void {
+  var inProposedCircuit = posInProposedCircuit(coords.x, coords.y);
+
+  if (inProposedCircuit === false) {
+    proposedCircuit.push(coords);
+  } else {
+    // handle backtracking
+    proposedCircuit = proposedCircuit.slice(0, inProposedCircuit + 1);
+  }
+}
+
+function proposedCircuitMoveCells(coords: Point): Point[] | false {
+  var lastPoint = proposedCircuit.last();
+  var same = compareCoords(lastPoint, coords);
+  var adjacent = isAdjacent(lastPoint, coords);
+  var node = nodeColor(coords.x, coords.y);
+  var matchingNode = isMatchingNode(coords.x, coords.y);
+  var inProposedCircuit = posInProposedCircuit(coords.x, coords.y);
+  var isTruncating = inProposedCircuit !== false;
+
+  if (same) return false;
+  if (isTruncating) return [coords];
+
+  if (
+    adjacent &&
+    (!node || matchingNode || node == proposedCircuitColor) &&
+    !proposedCircuitEnd
+  ) {
+    return [coords];
+  }
+
+  var skipped = skippedCellInSameDirection(lastPoint, coords);
+  if (
+    skipped &&
+    !node &&
+    !nodeColor(skipped.x, skipped.y) &&
+    posInProposedCircuit(skipped.x, skipped.y) === false &&
+    !proposedCircuitEnd
+  ) {
+    return [skipped, coords];
+  }
+
+  return false;
+}
+
+function moveProposedCircuitTo(coords: Point): void {
+  var moveCells = proposedCircuitMoveCells(coords);
+
+  if (!moveCells) return;
+
+  moveCells.forEach(function (cell) {
+    addProposedCircuitPoint(cell);
+  });
+
+  restoreCircuits();
+
+  // limit extra circuit from end node
+  var lastPoint = proposedCircuit.last();
+  proposedCircuitEnd =
+    lastPoint && isMatchingNode(lastPoint.x, lastPoint.y) ? true : false;
+
+  // find conflicting circuits and slice
+  var posInfo = anyProposedInCurrentCircuits();
+  if (posInfo !== false) {
+    posInfo.forEach(function (val, index) {
+      markOverwrittenCircuit(currentCircuits[val.circuit]);
+      currentCircuits[val.circuit].points = currentCircuits[
+        val.circuit
+      ].points.slice(0, val.pos);
+    });
+  }
+
+  updateBoard();
+}
+
 function anyProposedInCurrentCircuits(): CircuitPosition[] | false {
   var slices: CircuitPosition[] = [];
 
@@ -960,46 +1052,7 @@ function moveEvent(event: MouseEvent): false | void {
   try {
     var coords = posToCell(event.clientX, event.clientY);
 
-    var lastPoint = proposedCircuit.last();
-    var same = compareCoords(lastPoint, coords);
-    var adjacent = isAdjacent(lastPoint, coords);
-    var node = nodeColor(coords.x, coords.y);
-    var matchingNode = isMatchingNode(coords.x, coords.y);
-    var inProposedCircuit = posInProposedCircuit(coords.x, coords.y);
-    var isTruncating = inProposedCircuit !== false;
-
-    if (
-      !same &&
-      (isTruncating ||
-        (adjacent &&
-          (!node || matchingNode || node == proposedCircuitColor) &&
-          !proposedCircuitEnd))
-    ) {
-      if (inProposedCircuit === false) {
-        proposedCircuit.push(coords);
-      } else {
-        // handle backtracking
-        proposedCircuit = proposedCircuit.slice(0, inProposedCircuit + 1);
-      }
-
-      restoreCircuits();
-
-      // limit extra circuit from end node
-      proposedCircuitEnd = matchingNode ? true : false;
-
-      // find conflicting circuits and slice
-      var posInfo = anyProposedInCurrentCircuits();
-      if (posInfo !== false) {
-        posInfo.forEach(function (val, index) {
-          markOverwrittenCircuit(currentCircuits[val.circuit]);
-          currentCircuits[val.circuit].points = currentCircuits[
-            val.circuit
-          ].points.slice(0, val.pos);
-        });
-      }
-
-      updateBoard();
-    }
+    moveProposedCircuitTo(coords);
   } catch (e) {}
 } // moveEvent()
 
@@ -1086,46 +1139,7 @@ function moveTouchEvent(event: TouchEvent): false | void {
 
     if (!coords) return false;
 
-    var lastPoint = proposedCircuit.last();
-    var same = compareCoords(lastPoint, coords);
-    var adjacent = isAdjacent(lastPoint, coords);
-    var node = nodeColor(coords.x, coords.y);
-    var matchingNode = isMatchingNode(coords.x, coords.y);
-    var inProposedCircuit = posInProposedCircuit(coords.x, coords.y);
-    var isTruncating = inProposedCircuit !== false;
-
-    if (
-      !same &&
-      (isTruncating ||
-        (adjacent &&
-          (!node || matchingNode || node == proposedCircuitColor) &&
-          !proposedCircuitEnd))
-    ) {
-      if (inProposedCircuit === false) {
-        proposedCircuit.push(coords);
-      } else {
-        // handle backtracking
-        proposedCircuit = proposedCircuit.slice(0, inProposedCircuit + 1);
-      }
-
-      restoreCircuits();
-
-      // limit extra circuit from end node
-      proposedCircuitEnd = matchingNode ? true : false;
-
-      // find conflicting circuits and slice
-      var posInfo = anyProposedInCurrentCircuits();
-      if (posInfo !== false) {
-        posInfo.forEach(function (val, index) {
-          markOverwrittenCircuit(currentCircuits[val.circuit]);
-          currentCircuits[val.circuit].points = currentCircuits[
-            val.circuit
-          ].points.slice(0, val.pos);
-        });
-      }
-
-      updateBoard();
-    }
+    moveProposedCircuitTo(coords);
   } catch (e) {}
 } // moveTouchEvent()
 
