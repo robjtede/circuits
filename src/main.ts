@@ -17,6 +17,7 @@ var playArea = document.createElement("div");
 var boardArea = document.createElement("div");
 var groupLabel = document.createElement("label");
 var groupSelect = document.createElement("select");
+var levelToggleButton = document.createElement("button");
 var levelSidebar = document.createElement("aside");
 var levelSidebarTitle = document.createElement("h2");
 var levelList = document.createElement("div");
@@ -31,6 +32,7 @@ var completionScore = document.createElement("p");
 var completionActions = document.createElement("div");
 var completionNextButton = document.createElement("button");
 var completionCloseButton = document.createElement("button");
+var smallScreenQuery = window.matchMedia("(max-width: 700px)");
 
 app.className = "game";
 toolbar.className = "toolbar";
@@ -39,6 +41,12 @@ boardArea.className = "board-area";
 groupLabel.textContent = "Size";
 groupLabel.htmlFor = "group-select";
 groupSelect.id = "group-select";
+levelToggleButton.type = "button";
+levelToggleButton.className = "level-toggle";
+levelToggleButton.textContent = "Levels";
+levelToggleButton.setAttribute("aria-controls", "level-sidebar");
+levelToggleButton.setAttribute("aria-expanded", "false");
+levelSidebar.id = "level-sidebar";
 levelSidebar.className = "level-sidebar";
 levelSidebarTitle.className = "level-sidebar-title";
 levelSidebarTitle.textContent = "Levels";
@@ -63,7 +71,7 @@ completionCloseButton.textContent = "Close";
 
 groupLabel.appendChild(groupSelect);
 levelSidebar.append(groupLabel, levelSidebarTitle, levelList);
-toolbar.append(progressStatus, nextButton, resetButton);
+toolbar.append(progressStatus, levelToggleButton, nextButton, resetButton);
 completionActions.append(completionNextButton, completionCloseButton);
 completionPanel.append(completionTitle, completionScore, completionActions);
 completionOverlay.appendChild(completionPanel);
@@ -95,11 +103,13 @@ var currentGroupIndex: number;
 var currentLevelIndex: number;
 var completed: boolean;
 var perfectRun: boolean;
+var levelSidebarOpen: boolean;
 var recentCompletedColor: string | undefined;
 var oldCompletedColors: string[];
 
 currentGroupIndex = 0;
 currentLevelIndex = 0;
+levelSidebarOpen = false;
 var board: LevelBoard = cloneLevel(currentLevel());
 
 var prevCircuits: Circuit[] = []; // last state of circuits - background drawing
@@ -446,6 +456,7 @@ function selectGroup(groupId: string): void {
   board = cloneLevel(currentLevel());
   updateLevelHash(true);
   openLevel();
+  closeLevelSidebar();
 }
 
 function selectLevel(levelId: string): void {
@@ -457,6 +468,41 @@ function selectLevel(levelId: string): void {
   board = cloneLevel(currentLevel());
   updateLevelHash(true);
   openLevel();
+  closeLevelSidebar();
+}
+
+function updateLevelSidebarState(): void {
+  var isSmallScreen = smallScreenQuery.matches;
+
+  playArea.classList.toggle(
+    "is-level-sidebar-open",
+    isSmallScreen && levelSidebarOpen,
+  );
+  levelToggleButton.setAttribute("aria-expanded", String(levelSidebarOpen));
+  levelSidebar.inert = isSmallScreen && !levelSidebarOpen;
+  levelSidebar.toggleAttribute("inert", isSmallScreen && !levelSidebarOpen);
+  levelSidebar.setAttribute(
+    "aria-hidden",
+    String(isSmallScreen && !levelSidebarOpen),
+  );
+}
+
+function openLevelSidebar(): void {
+  levelSidebarOpen = true;
+  updateLevelSidebarState();
+}
+
+function closeLevelSidebar(): void {
+  levelSidebarOpen = false;
+  updateLevelSidebarState();
+}
+
+function toggleLevelSidebar(): void {
+  if (levelSidebarOpen) {
+    closeLevelSidebar();
+  } else {
+    openLevelSidebar();
+  }
 }
 
 function openLevel() {
@@ -1277,8 +1323,10 @@ window.addEventListener("touchend", upTouchEvent);
 window.addEventListener("touchcancel", upTouchEvent);
 window.addEventListener("hashchange", handleUrlLevelChange);
 window.addEventListener("popstate", handleUrlLevelChange);
+smallScreenQuery.addEventListener("change", updateLevelSidebarState);
 resizeObserver = new ResizeObserver(resizeCanvas);
 resizeObserver.observe(canvas);
+updateLevelSidebarState();
 
 groupSelect.addEventListener("change", function (event: Event) {
   var target = event.target as HTMLSelectElement;
@@ -1286,6 +1334,7 @@ groupSelect.addEventListener("change", function (event: Event) {
   selectGroup(target.value);
 });
 
+levelToggleButton.addEventListener("click", toggleLevelSidebar);
 resetButton.addEventListener("click", resetGame);
 nextButton.addEventListener("click", nextLevel);
 completionNextButton.addEventListener("click", nextLevel);
