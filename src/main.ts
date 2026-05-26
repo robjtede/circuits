@@ -62,8 +62,8 @@ completionCloseButton.type = "button";
 completionCloseButton.textContent = "Close";
 
 groupLabel.appendChild(groupSelect);
-levelSidebar.append(levelSidebarTitle, levelList);
-toolbar.append(groupLabel, progressStatus, nextButton, resetButton);
+levelSidebar.append(groupLabel, levelSidebarTitle, levelList);
+toolbar.append(progressStatus, nextButton, resetButton);
 completionActions.append(completionNextButton, completionCloseButton);
 completionPanel.append(completionTitle, completionScore, completionActions);
 completionOverlay.appendChild(completionPanel);
