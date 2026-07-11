@@ -8,6 +8,7 @@ COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 COPY index.html ./
+COPY public ./public
 COPY src ./src
 
 RUN --mount=type=cache,target=/app/node_modules/.vite npm run build
